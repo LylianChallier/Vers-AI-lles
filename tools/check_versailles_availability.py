@@ -1,4 +1,4 @@
-# tools/gat_availability_versailles.py
+# tools/check_versailles_availability.py
 import requests
 from langchain.tools import tool
 

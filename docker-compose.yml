@@ -1,0 +1,13 @@
+# docker-compose.yml
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7.0-alpine
+    container_name: redis-server
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: "monMotDePasse123"
+    command: ["redis-server", "--requirepass", "monMotDePasse123"]

@@ -1,4 +1,4 @@
-# weather_tool.py
+# tools/get_weather.py
 import requests
 from langchain.tools import tool
 import os

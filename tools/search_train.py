@@ -1,4 +1,4 @@
-# tools/get_train.py
+# tools/search_train.py
 import requests
 from langchain.tools import tool
 
@@ -8,8 +8,4 @@ def search_train(from_station: str, to_station: str, date: str, time: str) -> st
     # API SNCF ou simulation
     return f"Train simulé {from_station} → {to_station} à {time} le {date}"
 
-# 5️⃣ Réservation train
-@tool
-def book_train(train_id: str) -> str:
-    return f"Train {train_id} réservé !"
 

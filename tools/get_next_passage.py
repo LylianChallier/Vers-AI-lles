@@ -1,4 +1,4 @@
-# tools/ratp_tool.py
+# tools/get_next_passage.py
 import requests
 from langchain.tools import tool
 
