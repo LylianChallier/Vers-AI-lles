@@ -1,0 +1,15 @@
+# tools/get_train.py
+import requests
+from langchain.tools import tool
+
+# 4️⃣ SNCF recherche itinéraire
+@tool
+def search_train(from_station: str, to_station: str, date: str, time: str) -> str:
+    # API SNCF ou simulation
+    return f"Train simulé {from_station} → {to_station} à {time} le {date}"
+
+# 5️⃣ Réservation train
+@tool
+def book_train(train_id: str) -> str:
+    return f"Train {train_id} réservé !"
+

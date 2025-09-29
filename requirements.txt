@@ -3,3 +3,8 @@ langchain-community
 mistralai
 requests
 pydantic
+fastapi
+uvicorn
+redis
+pandas
+python-dotenv
