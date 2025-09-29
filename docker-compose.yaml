@@ -9,4 +9,6 @@ services:
       - ./backend:/code  # Monte le dossier backend dans /code du conteneur (pour le développement)
     environment:
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - MISTRAL_MODEL=${MISTRAL_MODEL}
     restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur

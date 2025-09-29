@@ -6,4 +6,5 @@ mistralai
 #sentence-transformers
 langchain
 langchain-mistralai
+langgraph
 numpy
