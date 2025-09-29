@@ -7,11 +7,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain.memory import ConversationBufferMemory
 from typing import Dict
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from fastapi.middleware.cors import CORSMiddleware
+from setup_graph import GraphManager, State, INIT_MESSAGE
+# from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 
-from rag_config import ask_with_rag
+from setup_graph import talk_to_agent
 
 app = FastAPI(title="MetroMind AI Agent API", description="Backend with LangChain AI Agent")
 
@@ -23,8 +25,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-medium-latest')
 
-model = init_chat_model("mistral-large-latest", model_provider="mistralai")
+model = init_chat_model(MISTRAL_MODEL, model_provider="mistralai")
+state : State = State()
+mgr = GraphManager()
 
 class ChatMessage(BaseModel):
     message: str
@@ -54,15 +59,14 @@ def chat_with_agent(chat_message: ChatMessage):
         # Construire la liste des messages avec l'historique + nouveau message
         # messages = chat_history + [HumanMessage(content=chat_message.message)]
         # Invoquer le modèle avec tout l'historique
-        # ai_message = ask_with_rag(messages, chat_message.message)
-        ai_message = model.invoke(chat_message.message)
-        text_content = ai_message.content
+        ai_message = talk_to_agent(state, mgr, chat_message.message)
+        # ai_message = model.invoke(chat_message.message)
         
         # IMPORTANT: Sauvegarder dans la mémoire
         memory.chat_memory.add_user_message(chat_message.message)
-        memory.chat_memory.add_ai_message(text_content)
+        memory.chat_memory.add_ai_message(ai_message)
         
-        return ChatResponse(response=text_content, session_id=chat_message.session_id)
+        return ChatResponse(response=ai_message, session_id=chat_message.session_id)
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur de l'agent: {str(e)}")

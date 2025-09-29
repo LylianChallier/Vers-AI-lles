@@ -308,19 +308,18 @@ class GraphManager():
         )
 
 from langchain_core.messages import HumanMessage
-state : State = State()
-mgr = GraphManager()
-print("AI : ", INIT_MESSAGE)
-while True:
-    message = input("You: ")
-    state.messages+=[HumanMessage(content = message)]
 
-    response = mgr.run_agent(state)
-    # Update state while preserving messages
-    for key, value in response.items():
-        if key != 'messages':
-            setattr(state, key, value)
-        else:
-            state.messages = value
+def talk_to_agent(state, mgr, query):
+    while True:
+        state.messages+=[HumanMessage(content = query)]
 
-    print("AI : ", state.messages[-1].content)
+        response = mgr.run_agent(state)
+        # Update state while preserving messages
+        for key, value in response.items():
+            if key != 'messages':
+                setattr(state, key, value)
+            else:
+                state.messages = value
+
+        rep = "AI : " +state.messages[-1].content
+        return rep

@@ -5,6 +5,7 @@ import numpy as np
 from mistralai import Mistral
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'mistral-embed')
 
 client = None
 
@@ -66,27 +67,37 @@ def embed_query(query):
         return []
     
     max_chars = 20000
+    overlap = 200
     
     # Si le texte est court, traitement normal
     if len(query) <= max_chars:
         response = client.embeddings.create(
-            model="mistral-embed",
+            model=EMBEDDING_MODEL,
             inputs=[query]
         )
         return response.data[0].embedding
     
     # Sinon, découper en chunks
     chunks = []
-    for i in range(0, len(query), max_chars):
-        chunks.append(query[i:i + max_chars])
-    
+    start = 0
+    while start < len(query):
+        end = start + max_chars
+        chunks.append(query[start:end])
+        
+        # Avancer en tenant compte de l'overlap
+        start = end - overlap
+        
+        # Éviter de créer un dernier chunk trop petit
+        if start >= len(query):
+            break
+
     print(f"📄 Document découpé en {len(chunks)} chunks")
     
     # Obtenir les embeddings de chaque chunk
     all_embeddings = []
     for chunk in chunks:
         response = client.embeddings.create(
-            model="mistral-embed",
+            model=EMBEDDING_MODEL,
             inputs=[chunk]
         )
         all_embeddings.append(response.data[0].embedding)
