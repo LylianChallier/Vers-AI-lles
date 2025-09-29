@@ -7,3 +7,5 @@ mistralai
 langchain
 langchain-mistralai
 numpy
+httpx
+fastmcp

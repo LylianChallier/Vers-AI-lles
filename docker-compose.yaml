@@ -2,11 +2,43 @@
 
 services:
   backend:
-    build: ./backend  # Chemin vers le dossier contenant le Dockerfile
+    build:
+      context: .                # ⬅ build from repo root
+      dockerfile: backend/Dockerfile
+    working_dir: /code
+    command: uvicorn backend.app:app --host 0.0.0.0 --port 8000
     ports:
-      - "1234:1234"   # Mappe le port 5000 du conteneur vers le port 5000 de ta machine
+      - "8000:8000"
     volumes:
-      - ./backend:/code  # Monte le dossier backend dans /code du conteneur (pour le développement)
+      - ./:/code                # ⬅ mount the whole repo, not only ./backend
     environment:
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
-    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+    restart: unless-stopped
+
+
+  mcp-osm:
+    image: python:3.11-slim
+    container_name: mcp-osm
+    working_dir: /app
+    stdin_open: true   # allow stdio tools
+    tty: true
+    volumes:
+      - ./:/app
+    command: >-
+      sh -lc "pip install --no-cache-dir -r backend/requirements.txt && tail -f /dev/null"
+    restart: unless-stopped
+
+  mcp-weather:
+    image: python:3.11-slim
+    container_name: mcp-weather
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    environment:
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+    volumes:
+      - ./:/app
+    command: >-
+      sh -lc "pip install --no-cache-dir -r backend/requirements.txt && tail -f /dev/null"
+    restart: unless-stopped

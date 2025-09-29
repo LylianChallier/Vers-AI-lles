@@ -1,20 +1,57 @@
 # Hackathon Datacraft - Château de Versailles
 
-Pour lancer le projet, se mettre à la racine et exécuter :
+## Prérequis
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) ou équivalent avec Docker Compose v2
+- (Optionnel) Python 3.10+ si vous préférez lancer l'API sans conteneur
+- Une clé [ngrok](https://ngrok.com/) si vous souhaitez exposer l'API publiquement
+
+## Démarrage rapide
+
+1. **Configurer l'environnement**
+   - Dupliquez `.env.example` en `.env` si nécessaire et ajustez les clés (OpenWeather, etc.).
+   - Placez-vous à la racine du dépôt (`les_4_MousquetAIres`).
+
+2. **Construire et lancer l'API**
+   ```bash
+   docker compose up --build
+   ```
+   Attendez les logs suivants :
+   ```
+   backend-1  | INFO:     Application startup complete.
+   backend-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+   ```
+
+3. **Explorer la documentation interactive**
+   Rendez-vous sur [http://localhost:8000/docs](http://localhost:8000/docs) pour tester les endpoints (`POST /chat`, `POST /plan`, etc.).
+
+## Exposer l'API avec ngrok
+
+Une fois Docker lancé, vous pouvez publier l'API :
+
 ```bash
-docker compose up --build
+ngrok http 8000 --url https://hackversailles-8-yeah.ngrok.app
 ```
 
-Une fois que les logs affichent les lignes suivantes :
+> ℹ️ L'usage d'une URL statique nécessite un compte ngrok payant. Sans cela, omettez `--url …` et réutilisez l'URL générée dynamiquement.
+
+## Exemple d'appel au planificateur
+
+Testez l'endpoint MCP-aware `/plan` (qui ajuste le parcours selon la météo) :
+
+```bash
+curl -sS -X POST https://hackversailles-8-yeah.ngrok.app/plan \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "query":"Family with stroller, low budget, mostly outdoors",
+        "date":"2025-10-05",
+        "start_time":"14:00",
+        "duration_min":210
+      }' | jq '{reponse, itinerary, warnings, alternatives}'
 ```
-backend-1  | INFO:     Started server process [1]
-backend-1  | INFO:     Waiting for application startup.
-backend-1  | INFO:     Application startup complete.
-backend-1  | INFO:     Uvicorn running on http://0.0.0.0:1234 (Press CTRL+C to quit)
-```
 
-Rendez-vous sur la page [localhost:1234](localhost:1234) pour accéder à Swagger UI pour tester le résultat du backend.
+> Remplacez l'URL par `http://localhost:8000/plan` si vous restez en local.
 
-Pour tester le chatbot, cliquez sur le premier élément (POST /chat Chat With Agent), puis cliquez sur `Try it out`. Le prompt se situe dans la clé message (initialement il y a écrit `string`). Ecrivez votre prompt puis cliquez sur `Exécuter`.
+### Utiliser l'interface Swagger pour le chatbot
 
-La réponse s'affiche plus bas, dans `Response body`.
+Dans `POST /chat`, cliquez sur `Try it out`, saisissez votre prompt dans le champ `message` puis `Execute`. La réponse du modèle apparaît dans `Response body`.

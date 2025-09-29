@@ -1,5 +1,6 @@
 from backend.embedding import embed_query, extract_text_from_content
 import json
+import os
 
 
 def create_documents():
@@ -43,4 +44,7 @@ def create_documents():
     
     return documents
 
-documents = create_documents()
+documents = []
+if os.getenv("BUILD_RAG_ON_START", "0") == "1":
+    documents = create_documents()
+
