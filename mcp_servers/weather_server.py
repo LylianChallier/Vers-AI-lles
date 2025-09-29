@@ -13,15 +13,19 @@ import math
 import asyncio
 import datetime as dt
 from typing import Optional, Literal
+from xmlrpc import client
 
 import httpx
 from pydantic import BaseModel, Field, field_validator
-from fastmcp import MCP, tool
+try:
+    from ._fastmcp_compat import MCP, tool, FASTMCP_AVAILABLE
+except ImportError:  # pragma: no cover - allows running as script
+    from _fastmcp_compat import MCP, tool, FASTMCP_AVAILABLE
 
 # --------- Config ---------
 OPENWEATHER_KEY = os.getenv("OPENWEATHER_API_KEY")
 OPENWEATHER_BASE = "https://api.openweathermap.org/data/2.5"   # /onecall (2.5)
-OPEN_METEO_BASE = "https://api.open-meteo.com/v1/meteofrance"  # hourly forecast
+OPEN_METEO_BASE = os.getenv("OPEN_METEO_BASE", "https://api.open-meteo.com/v1/forecast")
 OSM_NOMINATIM = os.getenv("OSM_NOMINATIM_URL", "https://nominatim.openstreetmap.org/search")
 
 # Château de Versailles (default)
@@ -30,6 +34,14 @@ VERSAILLES_LON = 2.1204
 TZ = "Europe/Paris"
 
 app = MCP("weather-tools")
+
+if not FASTMCP_AVAILABLE:  # pragma: no cover - informational only
+    import warnings
+
+    warnings.warn(
+        "fastmcp package unavailable - MCP stdio mode disabled; using fallback decorators",
+        RuntimeWarning,
+    )
 
 
 # --------- Models ---------
@@ -93,10 +105,19 @@ async def _open_meteo_hourly(client: httpx.AsyncClient, lat: float, lon: float, 
         "end_date": date,
         "timezone": TZ,
     }
-    r = await client.get(OPEN_METEO_BASE, params=params, timeout=30)
-    r.raise_for_status()
-    return r.json()
-
+    try:
+        r = await client.get(OPEN_METEO_BASE, params=params, timeout=30)
+        r.raise_for_status()
+        return r.json()
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 400:
+            params.pop("start_date", None)
+            params.pop("end_date", None)
+            params["forecast_days"] = 16
+            r2 = await client.get(OPEN_METEO_BASE, params=params, timeout=30)
+            r2.raise_for_status()
+            return r2.json()
+        raise
 
 async def _openweather_daily(client: httpx.AsyncClient, lat: float, lon: float, date: dt.date) -> Optional[dict]:
     """Try OpenWeather One Call (daily up to ~7 days). Falls back to None otherwise."""

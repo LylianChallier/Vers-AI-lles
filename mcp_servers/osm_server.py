@@ -13,7 +13,10 @@ from typing import Literal, Optional
 
 import httpx
 from pydantic import BaseModel, Field
-from fastmcp import MCP, tool
+try:
+    from ._fastmcp_compat import MCP, tool, FASTMCP_AVAILABLE
+except ImportError:  # pragma: no cover - allows running as script
+    from _fastmcp_compat import MCP, tool, FASTMCP_AVAILABLE
 
 OSM_NOMINATIM = os.getenv("OSM_NOMINATIM_URL", "https://nominatim.openstreetmap.org/search")
 OSRM_ROUTE = os.getenv("OSRM_BASE_URL", "https://router.project-osrm.org/route/v1")
@@ -24,6 +27,14 @@ VERSAILLES_LAT = 48.8049
 VERSAILLES_LON = 2.1204
 
 app = MCP("osm-routing")
+
+if not FASTMCP_AVAILABLE:  # pragma: no cover - informational only
+    import warnings
+
+    warnings.warn(
+        "fastmcp package unavailable - MCP stdio mode disabled; using fallback decorators",
+        RuntimeWarning,
+    )
 
 
 # --------- Models ---------
