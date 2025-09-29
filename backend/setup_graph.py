@@ -6,10 +6,11 @@ from pydantic import BaseModel, Field
 from langchain_mistralai.chat_models import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-#from IPython.display import Image, display
+from IPython.display import Image, display
 from langchain_core.runnables.graph import MermaidDrawMethod
 from langchain_core.runnables import Runnable
 from langgraph.graph import START, StateGraph
+from datetime import datetime
 import os
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
@@ -77,6 +78,7 @@ class IntentAgent():
             
             IMPORTANT: Only ONE field can be true at a time. There has to be one true, the others has to be false.
             You cannot have all 3 fields false or all 3 fields true.
+            CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
 
             """), ("human"," ===Messages: {messages}")])
 
@@ -113,6 +115,7 @@ class SpecificInfoAgent():
             Your response must be a JSON object (without markdown code blocks or any other formatting) with the following fields:
             {{ "response": str
             }}
+            CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         
         response = self.llm.invoke(prompt, messages = state.messages)
@@ -137,10 +140,11 @@ class ItineraryInfoAgent():
             Using the information given by the user fill the dictionnary and ask a question 
             at a time starting by the dictionnary keys order.
               
-            Ask for the real date if the user gives a relative date like "today" or "tomorrow" or something similar.
+            Today, the date is {current_date}, so if the user says "today" or "this weekend",
+            interpret it accordingly.
             When you ask for the hours, precise the opening hours.
             The user can response "10h", "10h00", "10:00", "10:00am", "10:00 am", "10 am", "10am" for 10 o'clock.
-              
+            
             If you have any doubt regarding the user answers, ask to clarify. Continue to ask questions 
             until all fields are filled. If the user doesn't want to give a specific information, answer him
             that your itinerary will be less precise. Ask again, if the user insists to not give the information,
@@ -152,10 +156,11 @@ class ItineraryInfoAgent():
               "necessary_info_for_road": {{date: str | null, hour: str | null, group_type: str | null, 
               time_of_visit: str | null, budget: str | null}}
             }}
+            CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         
         response = self.llm.invoke(prompt, messages = state.messages,
-                                   necessary_info_for_road = state.necessary_info_for_road)
+                                   necessary_info_for_road = state.necessary_info_for_road, current_date = datetime.today().strftime('%Y-%m-%d'))
         output_parser = JsonOutputParser()
         parsed_response = output_parser.parse(response)
 
@@ -183,6 +188,7 @@ class RoadInVersaillesAgent():
             Your response must be a JSON object (without markdown code blocks or any other formatting) with the following field:
             {{ "response": str
             }}
+            CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         
         response = self.llm.invoke(prompt, messages = state.messages, necessary_info_for_road = state.necessary_info_for_road)
@@ -222,15 +228,6 @@ class Conditions():
             return "road_in_versailles_agent"
         else:
             return END
-    
-    # @staticmethod
-    # def route_specific_info_agent(
-    #     state: State,
-    # ) -> Literal["specific_info_agent", END]:
-    #     if state.user_wants_specific_info:
-    #         return "specific_info_agent"
-    #     else:
-    #         return END
 
 class GraphManager():
     def __init__(self):
@@ -310,16 +307,14 @@ class GraphManager():
 from langchain_core.messages import HumanMessage
 
 def talk_to_agent(state, mgr, query):
-    while True:
-        state.messages+=[HumanMessage(content = query)]
+    state.messages+=[HumanMessage(content = query)]
 
-        response = mgr.run_agent(state)
-        # Update state while preserving messages
-        for key, value in response.items():
-            if key != 'messages':
-                setattr(state, key, value)
-            else:
-                state.messages = value
+    response = mgr.run_agent(state)
+    # Update state while preserving messages
+    for key, value in response.items():
+        if key != 'messages':
+            setattr(state, key, value)
+        else:
+            state.messages = value
 
-        rep = "AI : " +state.messages[-1].content
-        return rep
+    return state.messages[-1].content

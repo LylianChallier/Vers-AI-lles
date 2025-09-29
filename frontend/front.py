@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # Adresse de ton backend FastAPI
-API_URL = "http://localhost:1234"  # adapte si besoin
+API_URL = "http://backend:1234"  # adapte si besoin
 
 st.set_page_config(page_title="Agent IA", page_icon="🤖", layout="centered")
 
@@ -20,12 +20,14 @@ for msg in st.session_state.messages:
     else:
         st.markdown(f"🤖 **Agent :** {msg['content']}")
 
-# Champ de saisie
-user_input = st.text_area("Votre message :", placeholder="Écrivez ici...")
+# Formulaire pour gérer l'envoi avec Entrée
+with st.form(key="chat_form", clear_on_submit=True):
+    user_input = st.text_input("Votre message :", placeholder="Écrivez ici...", key="user_input")
+    submitted = st.form_submit_button("Envoyer")
 
-if st.button("Envoyer"):
+if submitted:
     if user_input.strip() == "":
-        st.warning("Veuillez entrer un message avant d’envoyer.")
+        st.warning("Veuillez entrer un message avant d'envoyer.")
     else:
         # Ajouter le message utilisateur à l'historique
         st.session_state.messages.append({"role": "user", "content": user_input})
@@ -46,8 +48,6 @@ if st.button("Envoyer"):
                 {"role": "assistant", "content": f"Impossible de joindre le backend : {e}"}
             )
 
-        # Vider le champ texte après envoi
+        # Recharger la page pour afficher les nouveaux messages
         st.rerun()
 
-st.markdown("---")
-st.caption("Interface Streamlit avec historique de discussion.")

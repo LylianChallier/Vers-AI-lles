@@ -18,4 +18,4 @@ COPY . /code/
 EXPOSE 8501
 
 # Lance Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "front.py", "--server.port=8501", "--server.address=0.0.0.0"]
