@@ -1,5 +1,6 @@
 langchain
 langchain-community
+langchain-mistralai
 mistralai
 requests
 pydantic
@@ -9,3 +10,4 @@ redis
 pandas
 python-dotenv
 langgraph
+pytest

@@ -3,7 +3,7 @@
 from langchain.tools import tool
 import urllib.parse
 
-@tool
+@tool(description='Get map')
 def google_maps_route(origin: str, destination: str, mode: str = "transit") -> str:
     """
     Génère un lien Google Maps pour un itinéraire.

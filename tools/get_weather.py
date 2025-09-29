@@ -6,7 +6,7 @@ import os
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHER_API_KEY", "demo")
 
 # Note: city weather can be either city from and to (Versailles)
-@tool
+@tool(description='Get weather')
 def get_weather(city: str) -> str:
     """Returns weather conditions from OpenWeatherMap"""
     url = "http://api.openweathermap.org/data/2.5/weather"

@@ -4,7 +4,7 @@ from langchain.tools import tool
 
 BASE_URL = "https://api-ratp.pierre-grimaud.fr/v4"  # endpoint du projet ratp-api-rest
 
-@tool
+@tool(description='Get metro times')
 def get_next_passages(stop: str, line: str, transport_type: str = "bus") -> str:
     """
     Ex : stop="Châtelet", line="72", transport_type="bus"

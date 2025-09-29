@@ -2,7 +2,7 @@
 import pandas as pd
 from langchain.tools import tool
 
-@tool
+@tool(description='Get metro schedule')
 def get_schedules_at_time(stop_id: str, line_id: str, transport_type: str, hour: str) -> str:
     """
     stop_id: l'arrêt RATP
