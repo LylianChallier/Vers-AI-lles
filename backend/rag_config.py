@@ -7,7 +7,6 @@ def ask_with_rag(question):
     return [SystemMessage(content=system_prompt), HumanMessage(content=question)]
 
 def config_system_prompt(question):
-    embedded_request = embed_query(question)
     top_docs = select_top_n_similar_documents(question, documents=None, n=10, metric='cosine')
     print("Top documents to use as context:")
     for doc in top_docs:
