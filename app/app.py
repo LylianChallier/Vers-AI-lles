@@ -1,18 +1,18 @@
+# app/main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
-from agent_multistep import run_agent  # ton agent multi-step avec tools + mémoire Redis
+from agents.langgraph_flow import run_graph
 
 app = FastAPI()
 
 class UserMessage(BaseModel):
-    session_id: str
     message: str
 
 @app.post("/interact")
 def interact(msg: UserMessage):
-    """
-    Envoie le message à l'agent. 
-    L'agent analyse et déclenche le tool approprié si besoin.
-    """
-    response = run_agent(msg.session_id, msg.message)
+    response = run_graph(msg.message)
     return {"response": response}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
