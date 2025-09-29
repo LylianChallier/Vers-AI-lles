@@ -1,10 +1,14 @@
-from .embedding import select_top_n_similar_documents
-from .embedding import embed_query
-from .create_db import documents
+from embedding import select_top_n_similar_documents, embed_query
+# from create_db import documents
+
+def ask_with_rag(question):
+    system_prompt = config_system_prompt(question)
+    from langchain_core.messages import SystemMessage, HumanMessage
+    return [SystemMessage(content=system_prompt), HumanMessage(content=question)]
 
 def config_system_prompt(question):
     embedded_request = embed_query(question)
-    top_docs = select_top_n_similar_documents(question, documents, n=10, metric='cosine')
+    top_docs = select_top_n_similar_documents(question, documents=None, n=10, metric='cosine')
     print("Top documents to use as context:")
     for doc in top_docs:
         print(f"- {doc['filename']}: {doc['content']}...")  # Print first 100 characters of content

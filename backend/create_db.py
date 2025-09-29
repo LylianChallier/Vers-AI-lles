@@ -1,7 +1,6 @@
 from embedding import embed_query, extract_text_from_content
 import json
 
-
 def create_documents():
     file = 'data/versailles_semantic_complete_20250813_204248.jsonl'
     documents = []
@@ -26,7 +25,10 @@ def create_documents():
     
     # Embedding des documents
     print(f"Embedding de {len(documents)} documents...")
+    i = 0
     for i, document in enumerate(documents):
+        if i>20:
+            break
         # Extraire le contenu textuel
         content = document.get("content", [])
         
@@ -43,4 +45,18 @@ def create_documents():
     
     return documents
 
-documents = create_documents()
+def save_documents(documents, output_file=None):
+    """
+    Sauvegarde les documents avec leurs embeddings dans un fichier JSONL
+    """
+    if output_file is None:
+        output_file = f'data/documents_embedded.jsonl'
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        for doc in documents:
+            f.write(json.dumps(doc, ensure_ascii=False) + '\n')
+    
+    print(f"✅ {len(documents)} documents sauvegardés dans {output_file}")
+    return output_file
+
+# Utilisation

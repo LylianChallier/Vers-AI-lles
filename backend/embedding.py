@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 import numpy as np
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 from mistralai import Mistral
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
@@ -65,7 +65,7 @@ def embed_query(query):
     if not query or not isinstance(query, str):
         return []
     
-    max_chars = 20000  # ~8000 tokens
+    max_chars = 20000
     
     # Si le texte est court, traitement normal
     if len(query) <= max_chars:
