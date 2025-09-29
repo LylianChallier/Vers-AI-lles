@@ -1,4 +1,4 @@
-from embedding import embed_query, extract_text_from_content
+from backend.embedding import embed_query, extract_text_from_content
 import json
 
 

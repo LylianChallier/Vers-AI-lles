@@ -1,6 +1,5 @@
-from .embedding import select_top_n_similar_documents
-from .embedding import embed_query
-from .create_db import documents
+from backend.embedding import select_top_n_similar_documents, embed_query
+from backend.create_db import documents
 
 def config_system_prompt(question):
     embedded_request = embed_query(question)
@@ -62,4 +61,3 @@ def config_system_prompt(question):
                 </context>
                 """
     return system_prompt
-

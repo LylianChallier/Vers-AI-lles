@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import os
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from mistralai import Mistral
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
