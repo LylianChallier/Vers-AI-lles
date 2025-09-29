@@ -119,7 +119,7 @@ class SpecificInfoAgent():
         output_parser = JsonOutputParser()
         parsed_response = output_parser.parse(response)
 
-        return {"messages": AIMessage(content="Je sais pas chef deso")}
+        return {"messages": AIMessage(content=parsed_response["response"])}
 
 
 class ItineraryInfoAgent():
@@ -185,7 +185,7 @@ class RoadInVersaillesAgent():
             }}
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         
-        response = self.llm.invoke(prompt, messages = state.messages)
+        response = self.llm.invoke(prompt, messages = state.messages, necessary_info_for_road = state.necessary_info_for_road)
         output_parser = JsonOutputParser()
         parsed_response = output_parser.parse(response)
 
