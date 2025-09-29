@@ -9,8 +9,9 @@ from langchain.memory import ConversationBufferMemory
 from typing import Dict
 from langchain_core.messages import HumanMessage
 from fastapi.middleware.cors import CORSMiddleware
+from langchain.chat_models import init_chat_model
 
-from .rag_config import ask_with_rag
+from rag_config import ask_with_rag
 
 app = FastAPI(title="MetroMind AI Agent API", description="Backend with LangChain AI Agent")
 
@@ -21,6 +22,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+model = init_chat_model("mistral-large-latest", model_provider="mistralai")
 
 class ChatMessage(BaseModel):
     message: str
@@ -48,10 +52,10 @@ def chat_with_agent(chat_message: ChatMessage):
         chat_history = memory.chat_memory.messages
         
         # Construire la liste des messages avec l'historique + nouveau message
-        messages = chat_history + [HumanMessage(content=chat_message.message)]
-        
+        # messages = chat_history + [HumanMessage(content=chat_message.message)]
         # Invoquer le modèle avec tout l'historique
-        ai_message = ask_with_rag(messages, chat_message.message)
+        # ai_message = ask_with_rag(messages, chat_message.message)
+        ai_message = model.invoke(chat_message.message)
         text_content = ai_message.content
         
         # IMPORTANT: Sauvegarder dans la mémoire
