@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from langchain_mistralai.chat_models import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from IPython.display import Image, display
+# from IPython.display import Image, display
 from langchain_core.runnables.graph import MermaidDrawMethod
 from langchain_core.runnables import Runnable
 from langgraph.graph import START, StateGraph
@@ -14,6 +14,10 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+
+from embedding import select_top_n_similar_documents
+from create_db import create_documents, save_documents
+from list import longlist
 
 MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-7b-instruct-v0.1')
 
@@ -184,14 +188,25 @@ class RoadInVersaillesAgent():
             - The type of group (family, friends, solo, etc.) to tailor the recommendations.
             - The time of visit to suggest activities that fit within that timeframe.
             - The budget to recommend activities that are affordable for the user.
+            
+            Here is some additional information about the castle of Versailles that might be useful:
+            {rag_context}
                           
             Your response must be a JSON object (without markdown code blocks or any other formatting) with the following field:
             {{ "response": str
             }}
             CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
-        
-        response = self.llm.invoke(prompt, messages = state.messages, necessary_info_for_road = state.necessary_info_for_road)
+        query_client = "Le client veut visiter le château de Versailles le {date} à {hour} avec un groupe de type {group_type}. " \
+                          "Il prévoit de visiter pendant {time_of_visit} heures et son budget est {budget}.".format(**state.necessary_info_for_road)
+        rag_context = select_top_n_similar_documents(query_client, documents=longlist, n=10, metric='cosine')
+        print(query_client)
+        print("Top documents to use as context:")
+        for doc in rag_context:
+            print(f"- {doc['id']}: {doc['texte']}...")  # Print first 100 characters of content
+
+        data=", ".join([doc['texte'] for doc in rag_context])
+        response = self.llm.invoke(prompt, messages = state.messages, necessary_info_for_road = state.necessary_info_for_road, rag_context = data)
         output_parser = JsonOutputParser()
         parsed_response = output_parser.parse(response)
 
@@ -318,3 +333,12 @@ def talk_to_agent(state, mgr, query):
             state.messages = value
 
     return state.messages[-1].content
+
+mgr = GraphManager()
+state = State()
+while True:
+    user_input = input("You: ")
+    if user_input.lower() in ["exit", "quit"]:
+        break
+    answer = talk_to_agent(state, mgr, user_input)
+    print(f"Agent: {answer}\n")

@@ -17,9 +17,7 @@ def get_mistral_client():
         # Vérifier que la clé existe
         if not api_key:
             raise ValueError("MISTRAL_API_KEY n'est pas définie dans les variables d'environnement")
-        
-        print(f"Clé API chargée : {api_key[:10]}...")
-        
+                
         client = Mistral(api_key=api_key)
     return client
 
