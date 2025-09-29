@@ -1,175 +1,220 @@
 {
-  "informations_generales": {
-    "lieu": "Château de Versailles, 78000 Versailles",
-    "saisons": {
-      "haute_saison": "1er avril - 30 octobre",
-      "basse_saison": "1er novembre - 31 mars"
+  "conseils": [
+    {
+      "id": "info_lieu",
+      "texte": "Le Château de Versailles se situe au 78000 Versailles."
+    },
+    {
+      "id": "saison_haute",
+      "texte": "La haute saison au Château de Versailles s'étend du 1er avril au 30 octobre."
+    },
+    {
+      "id": "saison_basse",
+      "texte": "La basse saison au Château de Versailles s'étend du 1er novembre au 31 mars."
+    },
+    {
+      "id": "horaires_chateau",
+      "texte": "Le Château est ouvert tous les jours sauf les lundis, de 9h à 18h30, avec une dernière admission à 17h45 et une fermeture des caisses à 17h30."
+    },
+    {
+      "id": "horaires_trianon",
+      "texte": "Le Domaine de Trianon est ouvert tous les jours sauf les lundis, de 12h à 18h30, avec une dernière admission à 17h45 et une fermeture des caisses à 17h45, les jardins fermant à 18h30 avec évacuation à partir de 18h."
+    },
+    {
+      "id": "horaires_jardins",
+      "texte": "Les jardins sont ouverts tous les jours de 7h à 20h30, avec un dernier accès à 19h, accessibles par la cour d'honneur ou par les grilles de la Petite Venise, Ménagerie, Neptune ou Dragon."
+    },
+    {
+      "id": "jardins_fermeture_anticipee",
+      "texte": "En haute saison, les samedis de juin à septembre et certains jours, les jardins ferment de manière anticipée à 17h30 pour les Grandes Eaux Nocturnes."
+    },
+    {
+      "id": "horaires_jeu_paume",
+      "texte": "La salle du Jeu de Paume est ouverte tous les jours sauf les lundis, de 12h30 à 18h30, avec une dernière admission à 17h45 et un accès gratuit."
+    },
+    {
+      "id": "horaires_parc",
+      "texte": "Le Parc est ouvert tous les jours de 7h à 20h30, avec un dernier accès à 19h45."
+    },
+    {
+      "id": "acces_pieton_parc",
+      "texte": "Les accès piétons au Parc incluent la Grille de la Reine (7h-20h30, dernier accès 19h45), la Grille des Matelots (7h-19h30, dernier accès 19h), la Grille Saint-Antoine (7h-19h30, dernier accès 19h), la Grille d'Honneur (7h-19h30, dernier accès 19h), la Grille de l'Etoile Royale (7h-19h30, dernier accès 19h), et la Grille de la Chapelle (9h-17h30, dernier accès 17h30, sauf les lundis)."
+    },
+    {
+      "id": "acces_vehicule_parc",
+      "texte": "Les accès véhicules au Parc sont possibles par la Grille de la Reine (9h, dernier accès caisse 17h50) et la Grille Saint-Antoine (9h, dernier accès caisse 17h50, uniquement les week-ends et jours fériés)."
+    },
+    {
+      "id": "horaires_marly_haute_saison",
+      "texte": "Le Domaine de Marly est ouvert aux piétons tous les jours de 7h30 à 19h30 (dernier accès à 19h) du 1er avril au 31 octobre, accessible par la Porte du Bourg, grille Deux portes, grille Royale, grille Coeur Volant, porte du Roi et porte du Stade."
+    },
+    {
+      "id": "horaires_marly_basse_saison",
+      "texte": "Le Domaine de Marly est ouvert aux piétons tous les jours de 8h à 17h30 du 1er novembre au 31 mars."
+    },
+    {
+      "id": "horaires_galerie_carrosses",
+      "texte": "La Galerie des Carrosses est ouverte les samedis, dimanches et jours fériés (sauf les lundis) de 12h30 à 18h30, avec une dernière admission à 17h45 et un accès gratuit."
+    },
+    {
+      "id": "horaires_galerie_sculptures",
+      "texte": "La Galerie des Sculptures et Moulages est ouverte les samedis, dimanches et jours fériés (sauf les lundis) de 12h30 à 18h30, avec une dernière admission à 17h45 et un accès gratuit."
+    },
+    {
+      "id": "billet_creneau_chateau",
+      "texte": "L'entrée au Château se fait dans la demi-heure suivant le créneau horaire indiqué sur le billet."
+    },
+    {
+      "id": "billet_passeport_flexibilite",
+      "texte": "Avec un billet Passeport, l'entrée aux Jardins ou à Trianon peut se faire à n'importe quelle heure pendant les horaires d'ouverture."
+    },
+    {
+      "id": "billet_passeport_entrees_jardins",
+      "texte": "Le billet Passeport est valable pour une entrée dans les jardins par la Cour d'Honneur du château ou les grilles de la Petite Venise, de la Ménagerie, de Neptune ou du Dragon."
+    },
+    {
+      "id": "jardins_payants_restrictions",
+      "texte": "Quand les jardins sont payants, on ne peut entrer que 2 fois et par 2 entrées différentes, mais pas 2 fois par la même entrée."
+    },
+    {
+      "id": "parcours_entree_tardive",
+      "texte": "Si votre créneau d'entrée au Château est à 15h ou après, il est recommandé de visiter le Domaine de Trianon en premier, avec visite des jardins le matin, visite de Trianon dès midi, et Château à partir de l'heure indiquée."
+    },
+    {
+      "id": "parcours_entree_midi",
+      "texte": "Si votre créneau d'entrée au Château est entre 12h30 et 14h30, il est recommandé de visiter les jardins le matin, puis le Château, et le Domaine de Trianon en fin d'après-midi (dernier accès à 17h45)."
+    },
+    {
+      "id": "preparation_chaussures",
+      "texte": "Prévoyez de bonnes chaussures car les distances sont importantes, surtout pour Trianon et les jardins."
+    },
+    {
+      "id": "preparation_temps",
+      "texte": "Les jardins, le Trianon et le parc valent le détour, il faut consacrer du temps à l'ensemble du domaine."
+    },
+    {
+      "id": "preparation_ecouteurs",
+      "texte": "Apportez des écouteurs pour profiter de l'audioguide de l'application smartphone, surtout en extérieur."
+    },
+    {
+      "id": "preparation_application",
+      "texte": "Téléchargez gratuitement l'application en amont et lancez le chargement des parcours audio avant d'arriver car les temps de chargement sont longs sur place et il n'y a pas de WiFi."
+    },
+    {
+      "id": "visites_guidees_recommandation",
+      "texte": "Les visites guidées ou activités famille sont encouragées quand c'est possible et pertinent."
+    },
+    {
+      "id": "visites_guidees_reservation",
+      "texte": "Réservez les visites guidées à l'avance pour avoir du choix car elles sont souvent complètes le jour J."
+    },
+    {
+      "id": "visites_guidees_ponctualite",
+      "texte": "Prévoyez d'arriver en avance pour les visites guidées."
+    },
+    {
+      "id": "abonnement_carte",
+      "texte": "Prenez la carte d'abonnement 'Un an à Versailles' si vous pensez venir 2 fois ou plus dans l'année."
+    },
+    {
+      "id": "petit_train_trianon",
+      "texte": "Le petit train est à encourager pour la visite du Trianon, avec possibilité de descendre et monter à chaque arrêt, premier départ à 11h10, et paiement CB possible directement auprès des conducteurs."
+    },
+    {
+      "id": "petit_train_priorite",
+      "texte": "À Trianon, les billets aller-retour pour le petit train ont la priorité sur les simples retours."
+    },
+    {
+      "id": "voiturettes_electriques",
+      "texte": "Les voiturettes électriques sont une alternative pour visiter le domaine à votre rythme si le budget le permet."
+    },
+    {
+      "id": "services_beau_temps",
+      "texte": "Par beau temps, des vélos, barques et balades au bord du canal sont disponibles."
+    },
+    {
+      "id": "accessibilite_fauteuil",
+      "texte": "Il est possible d'emprunter un fauteuil roulant au Château uniquement."
+    },
+    {
+      "id": "accessibilite_handicap",
+      "texte": "Des gratuités et dispositifs spécifiques sont disponibles pour les personnes en situation de handicap sur justificatif."
+    },
+    {
+      "id": "accessibilite_poussettes",
+      "texte": "Les poussettes sont autorisées dans le Château, il n'y a pas de consignes mais des casiers sont disponibles."
+    },
+    {
+      "id": "accessibilite_chiens_velos",
+      "texte": "Les chiens et les vélos ne sont autorisés que dans le Parc."
+    },
+    {
+      "id": "espaces_gratuits_horaires",
+      "texte": "Trois espaces gratuits sont ouverts l'après-midi : la salle du jeu de paume (mardi au dimanche) et les écuries (uniquement les week-ends)."
+    },
+    {
+      "id": "espaces_gratuits_liste",
+      "texte": "Les galeries des Carrosses, des Sculptures et Moulages, ainsi que la salle du Jeu de Paume sont gratuites quand elles sont ouvertes."
+    },
+    {
+      "id": "espaces_gratuits_caracteristiques",
+      "texte": "Ces espaces gratuits sont des visites originales, moins connues, adaptées notamment aux familles, sans réservation préalable."
+    },
+    {
+      "id": "ete_conditions",
+      "texte": "En été, la chaleur et la forte affluence rendent l'expérience moins agréable."
+    },
+    {
+      "id": "ete_fontaines",
+      "texte": "En été, pensez aux fontaines gratuites pour remplir votre gourde et utilisez les îlots de fraîcheur."
+    },
+    {
+      "id": "ete_equipement",
+      "texte": "En été, n'oubliez pas lunettes de soleil, chapeaux ou casquettes et gourdes."
+    },
+    {
+      "id": "ete_grandes_eaux_nocturnes",
+      "texte": "En été, les Grandes Eaux Nocturnes des weekends sont à promouvoir."
+    },
+    {
+      "id": "automne_hiver_conditions",
+      "texte": "De novembre à février par beau temps, ce sont les conditions optimales pour la visite avec une programmation riche, moins d'affluence et plus d'expositions."
+    },
+    {
+      "id": "recommandation_franciliens",
+      "texte": "Pour les Franciliens, il est recommandé de visiter le Château et Trianon de septembre à mars, et les jardins d'avril à octobre, le printemps étant particulièrement agréable."
+    },
+    {
+      "id": "jours_moindre_affluence",
+      "texte": "Les jours de moindre affluence sont le mercredi, le jeudi et le vendredi."
+    },
+    {
+      "id": "grandes_eaux_nocturnes_horaires",
+      "texte": "Les weekends d'été, pour les Grandes Eaux Nocturnes, les jardins ferment à 17h30 avant de rouvrir à 20h."
+    },
+    {
+      "id": "grandes_eaux_nocturnes_activites",
+      "texte": "Entre la fermeture et la réouverture pour les Grandes Eaux Nocturnes, il est possible de faire la VR ou la Sérénade Royale puis dîner en ville ou aller dans le Parc."
+    },
+    {
+      "id": "differences_spectacles",
+      "texte": "Il faut rappeler la différence entre Grandes Eaux et Jardins Musicaux si la période le requiert."
+    },
+    {
+      "id": "visiteurs_recurrents_message",
+      "texte": "Le château offre toujours de nouvelles choses à découvrir pour les visiteurs récurrents."
+    },
+    {
+      "id": "visiteurs_recurrents_suggestions",
+      "texte": "Pour les visiteurs récurrents, il est recommandé de découvrir Trianon, la Galerie des carrosses et/ou sculptures, la salle du jeu de paume, les expositions temporaires (particulièrement pour les franciliens), et les ouvertures exceptionnelles comme la salle du Congrès ou Trianon sous bois."
+    },
+    {
+      "id": "intemperies",
+      "texte": "La pluie ou d'autres intempéries n'engendrent pas l'annulation des visites, sauf météo exceptionnelle comme la neige ou les vents violents."
+    },
+    {
+      "id": "conditions_gratuite",
+      "texte": "Il faut informer sur les éventuelles conditions de gratuité des activités et visites."
     }
-  },
-  "horaires_ouverture": {
-    "chateau": {
-      "jours": "Tous les jours sauf les lundis",
-      "horaires": "9h - 18h30",
-      "derniere_admission": "17h45",
-      "fermeture_caisses": "17h30"
-    },
-    "domaine_trianon": {
-      "jours": "Tous les jours sauf les lundis",
-      "horaires": "12h - 18h30",
-      "derniere_admission": "17h45",
-      "fermeture_caisses": "17h45",
-      "note": "Les jardins ferment à 18h30 (évacuation à partir de 18h)"
-    },
-    "jardins": {
-      "jours": "Ouverts tous les jours",
-      "horaires": "7h à 20h30",
-      "dernier_acces": "19h",
-      "fermeture_anticipee": "En haute saison, les samedis de juin à septembre et certains jours, fermeture anticipée à 17h30 pour les Grandes Eaux Nocturnes",
-      "acces": "Par la cour d'honneur ou par les grilles de la Petite Venise, Ménagerie, Neptune, Dragon"
-    },
-    "salle_jeu_paume": {
-      "jours": "Tous les jours sauf les lundis",
-      "horaires": "12h30 - 18h30",
-      "derniere_admission": "17h45",
-      "acces": "Gratuit"
-    },
-    "parc": {
-      "jours": "Ouvert tous les jours",
-      "horaires": "7h à 20h30",
-      "dernier_acces": "19h45",
-      "acces_pieton": [
-        "Grille de la Reine (7h - 20h30, dernier accès 19h45)",
-        "Grille des Matelots (7h - 19h30, dernier accès 19h)",
-        "Grille Saint-Antoine (7h - 19h30, dernier accès 19h)",
-        "Grille d'Honneur (7h - 19h30, dernier accès 19h)",
-        "Grille de l'Etoile Royale (7h - 19h30, dernier accès 19h)",
-        "Grille de la Chapelle (9h - 17h30, dernier accès 17h30, sauf les lundis)"
-      ],
-      "acces_vehicule": [
-        "Grille de la Reine (9h - dernier accès caisse 17h50)",
-        "Grille Saint-Antoine (9h - dernier accès caisse 17h50, uniquement les week-ends et jours fériés)"
-      ]
-    },
-    "domaine_marly": {
-      "jours": "Ouvert aux piétons tous les jours",
-      "horaires_haute_saison": "7h30 à 19h30 (dernier accès à 19h) du 1er avril au 31 octobre",
-      "horaires_basse_saison": "8h à 17h30 du 1er novembre au 31 mars",
-      "acces": "Porte du Bourg, grille Deux portes, grille Royale, grille Coeur Volant, porte du Roi, porte du Stade"
-    },
-    "galerie_carrosses": {
-      "jours": "Samedis, dimanches et jours fériés, sauf les lundis",
-      "horaires": "12h30 - 18h30",
-      "derniere_admission": "17h45",
-      "acces": "Gratuit"
-    },
-    "galerie_sculptures_moulages": {
-      "jours": "Samedis, dimanches et jours fériés, sauf les lundis",
-      "horaires": "12h30 - 18h30",
-      "derniere_admission": "17h45",
-      "acces": "Gratuit"
-    }
-  },
-  "conseils_visite": {
-    "billetterie": [
-      {
-        "conseil": "L'entrée au Château se fait dans la demi-heure suivant le créneau horaire indiqué sur le billet"
-      },
-      {
-        "conseil": "Avec un billet Passeport, l'entrée aux Jardins ou à Trianon peut se faire à n'importe quelle heure pendant les horaires d'ouverture"
-      },
-      {
-        "conseil": "Le billet Passeport est valable pour une entrée dans les jardins par la Cour d'Honneur du château ou les grilles de la Petite Venise, de la Ménagerie, de Neptune ou du Dragon"
-      },
-      {
-        "conseil": "Quand les jardins sont payants, on ne peut entrer que 2 fois et par 2 entrées différentes (mais pas 2 fois par la même entrée)"
-      }
-    ],
-    "parcours_recommandes": {
-      "entree_15h_ou_apres": "Visiter le Domaine de Trianon en premier, avec visite des jardins le matin, visite de Trianon dès midi, et Château à partir de l'heure indiquée",
-      "entree_12h30_14h30": "Visiter les jardins le matin, puis le Château, et le Domaine de Trianon en fin d'après-midi (dernier accès à 17h45)"
-    },
-    "preparation": [
-      "Prévoir de bonnes chaussures : les distances sont importantes, surtout pour Trianon et les jardins",
-      "Les jardins, le Trianon et le parc valent le détour : consacrer du temps à l'ensemble du domaine",
-      "Apporter des écouteurs pour profiter de l'audioguide de l'application smartphone, surtout en extérieur",
-      "Télécharger gratuitement l'application en amont et lancer le chargement des parcours audio avant d'arriver (temps de chargement longs sur place, pas de WiFi)"
-    ],
-    "visites_guidees": [
-      "Encourager les visites guidées ou activités famille quand c'est possible et pertinent",
-      "Réserver les visites guidées à l'avance pour avoir du choix (souvent complet le jour J)",
-      "Prévoir d'arriver en avance pour les visites guidées"
-    ],
-    "abonnement": "Prendre la carte d'abonnement 'Un an à Versailles' si vous pensez venir 2 fois ou plus dans l'année"
-  },
-  "transport_sur_site": {
-    "petit_train": {
-      "description": "À encourager pour la visite du Trianon",
-      "caracteristiques": [
-        "Possibilité de descendre/monter à chaque arrêt",
-        "À Trianon, les billets aller-retour ont la priorité sur les simples retours",
-        "Premier départ à 11h10",
-        "Paiement CB possible directement auprès des conducteurs"
-      ]
-    },
-    "voiturettes_electriques": "Alternative pour visiter le domaine à votre rythme si le budget le permet",
-    "autres_services": "Par beau temps : vélos, barques et balades au bord du canal"
-  },
-  "accessibilite": [
-    "Possibilité de prêt de fauteuil roulant au Château uniquement",
-    "Gratuités et dispositifs spécifiques pour les personnes en situation de handicap (sur justificatif)",
-    "Les poussettes sont autorisées dans le Château (pas de consignes mais des casiers)",
-    "Les chiens et les vélos ne sont autorisés que dans le Parc"
-  ],
-  "espaces_gratuits": [
-    "3 espaces gratuits ouverts l'après-midi : la salle du jeu de paume (mardi au dimanche) et les écuries (uniquement les week-ends)",
-    "Les galeries des Carrosses, des Sculptures et Moulages, ainsi que la salle du Jeu de Paume sont gratuites quand elles sont ouvertes",
-    "Ces espaces sont des visites originales, moins connues, adaptées notamment aux familles, sans réservation préalable"
-  ],
-  "conseils_par_saison": {
-    "ete": {
-      "description": "Chaleur et forte affluence : expérience moins agréable",
-      "conseils": [
-        "Penser aux fontaines gratuites pour remplir sa gourde",
-        "Utiliser les îlots de fraîcheur",
-        "Ne pas oublier lunettes de soleil, chapeaux/casquettes et gourdes",
-        "Faire la promotion des Grandes Eaux Nocturnes les weekends"
-      ]
-    },
-    "automne_hiver": {
-      "periode": "Novembre-février, par beau temps",
-      "description": "Conditions optimales pour la visite",
-      "avantages": [
-        "Programmation riche",
-        "Moins d'affluence",
-        "Plus d'expositions"
-      ]
-    },
-    "recommandation_franciliens": "Château + Trianon de septembre à mars, et les jardins d'avril à octobre (printemps particulièrement agréable)"
-  },
-  "gestion_affluence": {
-    "jours_recommandes": ["Mercredi", "Jeudi", "Vendredi"],
-    "description": "Jours de moindre affluence"
-  },
-  "grandes_eaux_nocturnes": {
-    "periode": "Weekends d'été",
-    "horaires": "Les jardins ferment à 17h30 avant de rouvrir à 20h",
-    "activites_entre_temps": "Possibilité de faire la VR ou la Sérénade Royale puis dîner en ville ou aller dans le Parc"
-  },
-  "differences_jardins": {
-    "note": "Rappeler la différence entre Grandes Eaux et Jardins Musicaux si la période le requiert"
-  },
-  "pour_visiteurs_recurrents": {
-    "message": "Le château offre toujours de nouvelles choses à découvrir",
-    "suggestions": [
-      "Trianon",
-      "Galerie des carrosses et/ou sculptures",
-      "Salle du jeu de paume",
-      "Expositions temporaires (à promouvoir particulièrement pour les franciliens)",
-      "Ouvertures exceptionnelles (salle du Congrès, Trianon sous bois...)"
-    ]
-  },
-  "notes_importantes": [
-    "La pluie ou d'autres intempéries n'engendrent pas l'annulation des visites (sauf météo exceptionnelle : neige, vents violents)",
-    "Informer sur les éventuelles conditions de gratuité des activités et visites"
   ]
 }

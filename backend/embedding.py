@@ -54,8 +54,10 @@ def extract_text_from_content(content):
     return result.strip()
 
 def embed_query(query):
-    client = get_mistral_client()
-    
+    from langchain_mistralai import MistralAIEmbeddings
+
+    embeddings = MistralAIEmbeddings(model="mistral-embed", api_key=os.getenv('MISTRAL_API_KEY'))
+
     # Extraire le texte si c'est une structure complexe
     if isinstance(query, (dict, list)):
         query = extract_text_from_content(query)
@@ -65,15 +67,12 @@ def embed_query(query):
         return []
     
     max_chars = 20000
-    overlap = 200
-    
+    overlap = 1000
+
     # Si le texte est court, traitement normal
     if len(query) <= max_chars:
-        response = client.embeddings.create(
-            model=EMBEDDING_MODEL,
-            inputs=[query]
-        )
-        return response.data[0].embedding
+        response = embeddings.embed_query(query)
+        return response
     
     # Sinon, découper en chunks
     chunks = []
@@ -89,16 +88,13 @@ def embed_query(query):
         if start >= len(query):
             break
 
-    print(f"📄 Document découpé en {len(chunks)} chunks")
+    print(f"Document découpé en {len(chunks)} chunks")
     
     # Obtenir les embeddings de chaque chunk
     all_embeddings = []
     for chunk in chunks:
-        response = client.embeddings.create(
-            model=EMBEDDING_MODEL,
-            inputs=[chunk]
-        )
-        all_embeddings.append(response.data[0].embedding)
+        response = embeddings.embed_query(chunk)
+        all_embeddings.append(response)
     
     # Moyenner les embeddings
     import numpy as np

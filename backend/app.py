@@ -17,14 +17,6 @@ from setup_graph import talk_to_agent
 
 app = FastAPI(title="MetroMind AI Agent API", description="Backend with LangChain AI Agent")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-medium-latest')
 
 model = init_chat_model(MISTRAL_MODEL, model_provider="mistralai")

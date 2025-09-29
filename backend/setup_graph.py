@@ -333,12 +333,3 @@ def talk_to_agent(state, mgr, query):
             state.messages = value
 
     return state.messages[-1].content
-
-mgr = GraphManager()
-state = State()
-while True:
-    user_input = input("You: ")
-    if user_input.lower() in ["exit", "quit"]:
-        break
-    answer = talk_to_agent(state, mgr, user_input)
-    print(f"Agent: {answer}\n")
