@@ -1,0 +1,12 @@
+#version: "4"
+
+services:
+  backend:
+    build: ./backend  # Chemin vers le dossier contenant le Dockerfile
+    ports:
+      - "5000:5000"   # Mappe le port 5000 du conteneur vers le port 5000 de ta machine
+    volumes:
+      - ./backend:/code  # Monte le dossier backend dans /code du conteneur (pour le développement)
+    environment:
+      - ENV=development  # Définit une variable d'environnement pour indiquer le mode développement
+    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
