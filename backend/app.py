@@ -6,13 +6,14 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain.memory import ConversationBufferMemory
-from typing import Dict
+from typing import Dict, Optional
 from langchain_core.messages import HumanMessage, AIMessage
 from fastapi.middleware.cors import CORSMiddleware
 from setup_graph import GraphManager, GraphManagerEval, State, INIT_MESSAGE
 # from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from setup_graph import talk_to_agent
+from mcp_bridge import weather_summary_sync, versailles_itinerary_sync, route_between_sync
 
 app = FastAPI(title="4 mousquet'AIres", description="Backend with Langchain & Langgraph AI Agent")
 
@@ -45,6 +46,19 @@ class EvaluationRequest(BaseModel):
 
 class EvaluationResponse(BaseModel):
     answer: str
+
+class WeatherWindowRequest(BaseModel):
+    date: str
+    start_time: str
+    duration_text: Optional[str] = None
+    duration_min: Optional[int] = None
+    place: Optional[str] = "Château de Versailles, France"
+    lang: Optional[str] = "fr"
+
+class RouteRequest(BaseModel):
+    origin: str
+    destination: Optional[str] = None
+    profile: Optional[str] = "walking"
 
 chat_sessions: Dict[str, ConversationBufferMemory] = {}
 
@@ -108,6 +122,41 @@ def chat_with_agent(chat_message: ChatMessage):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur de l'agent: {str(e)}")
     
+
+@app.post("/tools/weather")
+def tool_weather(req: WeatherWindowRequest):
+    try:
+        duration_text = req.duration_text or (f"{req.duration_min} min" if req.duration_min else "180 min")
+        return weather_summary_sync(
+            date=req.date,
+            start_time=req.start_time,
+            duration_text=duration_text,
+            place=req.place,
+            lang=req.lang,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"weather tool error: {e}")
+
+
+@app.post("/tools/versailles_route")
+def tool_versailles_route(req: RouteRequest):
+    try:
+        return versailles_itinerary_sync(origin=req.origin, profile=req.profile)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"route tool error: {e}")
+
+
+@app.post("/tools/route")
+def tool_route_between(req: RouteRequest):
+    try:
+        if not req.destination:
+            raise HTTPException(status_code=400, detail="destination is required")
+        return route_between_sync(origin=req.origin, destination=req.destination, profile=req.profile)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"route tool error: {e}")
+
 
 @app.get("/chat/sessions")
 def get_chat_sessions():

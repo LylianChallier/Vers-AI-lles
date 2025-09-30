@@ -9,3 +9,5 @@ langchain-mistralai
 langgraph
 numpy
 langchain-core
+mcp
+httpx

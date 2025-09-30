@@ -19,6 +19,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 from embedding import select_top_n_similar_documents
 from create_db import create_documents, save_documents
 from list import longlist
+from mcp_bridge import weather_summary_sync
 
 MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-7b-instruct-v0.1')
 
@@ -104,6 +105,41 @@ class OffTopicAgent():
         self.llm = LLMManager()
     
     def get_necessary_info(self, state: State) -> Dict[str, Any]:
+        extract_prompt = ChatPromptTemplate.from_messages([
+            ('system', """Tu es un extracteur. Ta tâche: dire si l'utilisateur demande la MÉTÉO
+            (éventuellement pour Versailles) et extraire: date (YYYY-MM-DD), heure, durée (texte), lieu.
+            Réponds en JSON strict:
+            {"is_weather": bool, "date": str|null, "hour": str|null, "duration_text": str|null, "place": str|null}"""),
+            ('human', "Messages: {messages}\nRéponse JSON stricte:")
+        ])
+        ext: WeatherExtraction = self.llm.structured_invoke(extract_prompt, WeatherExtraction, messages=state.messages)
+
+        if ext.is_weather:
+            try:
+                w = weather_summary_sync(
+                    date=ext.date or datetime.today().strftime("%Y-%m-%d"),
+                    start_time=ext.hour or "10:00",
+                    duration_text=ext.duration_text or "180 min",
+                    place=ext.place or "Château de Versailles, France",
+                    lang="fr",
+                )
+                win, summ, hourly = w.get("window", {}), w.get("summary", {}), w.get("hourly", []) or []
+                label = summ.get("label", "")
+                advice = summ.get("advice", "")
+                preview = []
+                for h in hourly[:3]:
+                    ts = (h.get("ts") or "")[11:16]
+                    t = h.get("temp_c")
+                    pr = h.get("precip_prob")
+                    pm = h.get("precip_mm")
+                    preview.append(f"{ts}: {t}°C, pluie {pr}% ({pm} mm)")
+                preview_text = f"\nHeures clés: " + " · ".join(preview) if preview else ""
+                msg = (f"Météo le {win.get('date')} {win.get('start')}-{win.get('end')} à {win.get('place')}: "
+                       f"**{label}**. {advice}{preview_text}")
+                return {"messages": AIMessage(content=msg)}
+            except Exception as e:
+                return {"messages": AIMessage(content=f"Désolé, je n'ai pas pu obtenir la météo ({e}).")}
+
         prompt = ChatPromptTemplate.from_messages(
             [('system', """You are an expert AI assistant specialised in handling off-topic questions.
             Your role is to inform the user that you can only answer questions about the castle of Versailles.
@@ -111,20 +147,26 @@ class OffTopicAgent():
             If the user asks about weather in Versailles for some date, check the MCP API and give the answer.
             If the user asks about something related to Versailles but not the castle, answer it but 
             be sure that he is not asking for something completely unrelated.
-            
-            Your response must be a JSON object (without markdown code blocks or any other formatting) with the following field:
-            {{ "response": str
-            }}
-            CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
-            """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
-        
-        response = self.llm.structured_invoke(prompt, SpecificInfoOutput, messages = state.messages)
 
+            Your response must be a JSON object with:
+            {"response": str}
+            """),
+             ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")]
+        )
+        response = self.llm.structured_invoke(prompt, SpecificInfoOutput, messages=state.messages)
         return {"messages": AIMessage(content=response.response)}
 
 class SpecificInfoOutput(BaseModel):
     """Modèle pour la sortie de l'agent d'information spécifique"""
     response: str = Field(description="Réponse à la question spécifique sur le château de Versailles")
+
+
+class WeatherExtraction(BaseModel):
+    is_weather: bool = Field(description="True if user asks about weather for a place/time")
+    date: str | None = None
+    hour: str | None = None
+    duration_text: str | None = None
+    place: str | None = None
 
 class SpecificInfoAgent():
     def __init__(self):
@@ -263,23 +305,51 @@ class RoadInVersaillesAgent():
             
             Here is some additional information about the castle of Versailles that might be useful:
             {rag_context}
-              
 
+            Here is the weather context (if available): {weather_context}
                           
             Your response must be a JSON object (without markdown code blocks or any other formatting) with the following field:
             {{ "response": str
             }}
             CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
-            """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
-        query_client = "Le client veut visiter le château de Versailles le {date} à {hour} avec un groupe de type {group_type}. " \
-                          "Il prévoit de visiter pendant {time_of_visit} heures et son budget est {budget}.".format(**state.necessary_info_for_road)
-        rag_context = select_top_n_similar_documents(query_client, documents=longlist, n=50, metric='euclidian')
-        data=", ".join([doc['texte'] for doc in rag_context])
+            """),
+             ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")]
+        )
 
-        response = self.llm.structured_invoke(prompt, RoadOutput, messages=state.messages, necessary_info_for_road=state.necessary_info_for_road, rag_context=data, date=state.necessary_info_for_road.get('date'), hour=state.necessary_info_for_road.get('hour'))
-        return {
-            "messages": AIMessage(content=response.response),
-        }
+        # RAG
+        query_client = ("Le client veut visiter le château de Versailles le {date} à {hour} avec un groupe de type {group_type}. "
+                        "Il prévoit de visiter pendant {time_of_visit} heures et son budget est {budget}.").format(**state.necessary_info_for_road)
+        rag_context = select_top_n_similar_documents(query_client, documents=longlist, n=50, metric='euclidian')
+        data = ", ".join([doc['texte'] for doc in rag_context])
+
+        # Météo (si on a date+heure+durée)
+        ni = state.necessary_info_for_road
+        weather_context = ""
+        try:
+            if ni.get('date') and ni.get('hour') and ni.get('time_of_visit'):
+                w = weather_summary_sync(
+                    date=ni['date'],
+                    start_time=ni['hour'],
+                    duration_text=ni['time_of_visit'],
+                    place="Château de Versailles, France",
+                    lang="fr",
+                )
+                win, summ = w.get("window", {}), w.get("summary", {})
+                weather_context = (f"Météo {win.get('date')} {win.get('start')}-{win.get('end')} à {win.get('place')}: "
+                                   f"{summ.get('label')} — {summ.get('advice')}.")
+        except Exception as e:
+            weather_context = f"(Météo indisponible: {e})"
+
+        response = self.llm.structured_invoke(
+            prompt, RoadOutput,
+            messages=state.messages,
+            necessary_info_for_road=state.necessary_info_for_road,
+            rag_context=data,
+            weather_context=weather_context,
+            date=state.necessary_info_for_road.get('date'),
+            hour=state.necessary_info_for_road.get('hour')
+        )
+        return {"messages": AIMessage(content=response.response)}
             # Go check the wheather with the MCP API to see if it will be sunny or rainy on that day at this date :
             # {date}, {hour} in Versailles, France.
 class Conditions():

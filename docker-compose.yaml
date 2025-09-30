@@ -2,25 +2,53 @@
 
 services:
   backend:
-    build: ./backend  # Chemin vers le dossier contenant le Dockerfile
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
-      - "8001:8001"   # Mappe le port 5000 du conteneur vers le port 5000 de ta machine
+      - "8001:8001"
     volumes:
-      - ./backend:/code  # Monte le dossier backend dans /code du conteneur (pour le développement)
+      - ./backend:/app/backend
+      - ./mcp_servers:/app/mcp_servers
     environment:
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - MISTRAL_MODEL=${MISTRAL_MODEL}
-    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
-  
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - OPEN_METEO_BASE=${OPEN_METEO_BASE}
+      - OSM_NOMINATIM_URL=${OSM_NOMINATIM_URL}
+      - OSRM_BASE_URL=${OSRM_BASE_URL}
+    depends_on:
+      - mcp-osm
+      - mcp-weather
+    restart: unless-stopped
+
   frontend:
-    build: ./frontend  # Chemin vers le dossier contenant le Dockerfile
+    build: ./frontend
     ports:
-      - "8501:8501"   # Mappe le port 8501 du conteneur vers le port 8501 de ta machine
+      - "8501:8501"
     volumes:
-      - ./frontend:/app  # Monte le dossier frontend dans /app du conteneur
-    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
+      - ./frontend:/app
+    restart: unless-stopped
     depends_on:
       - backend
-  
-  
+
+  mcp-osm:
+    build:
+      context: .
+      dockerfile: mcp_servers/Dockerfile
+    volumes:
+      - ./mcp_servers:/app/mcp_servers
+    environment:
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+    restart: unless-stopped
+
+  mcp-weather:
+    build:
+      context: .
+      dockerfile: mcp_servers/Dockerfile
+    volumes:
+      - ./mcp_servers:/app/mcp_servers
+    environment:
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+    restart: unless-stopped
