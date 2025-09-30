@@ -211,6 +211,9 @@ class RoadInVersaillesAgent():
             
             Here is some additional information about the castle of Versailles that might be useful:
             {rag_context}
+              
+            Go check the wheather with the MCP API to see if it will be sunny or rainy on that day at this date :
+            {date}, {hour} in Versailles, France.
                           
             Your response must be a JSON object (without markdown code blocks or any other formatting) with the following field:
             {{ "response": str
