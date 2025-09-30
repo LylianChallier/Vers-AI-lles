@@ -5,7 +5,6 @@ from typing import Literal, Annotated, List, Dict, Any
 from pydantic import BaseModel, Field
 from langchain_mistralai.chat_models import ChatMistralAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
 # from IPython.display import Image, display
 from langchain_core.runnables.graph import MermaidDrawMethod
 from langchain_core.runnables import Runnable
@@ -132,10 +131,8 @@ class SpecificInfoAgent():
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         
         response = self.llm.structured_invoke(prompt, SpecificInfoOutput, messages = state.messages)
-        output_parser = JsonOutputParser()
-        parsed_response = output_parser.parse(response)
 
-        return {"messages": AIMessage(content=parsed_response["response"])}
+        return {"messages": AIMessage(content=response.response)}
 
 class NecessaryInfoForRoad(BaseModel):
     """Modèle pour les informations nécessaires à l'itinéraire"""

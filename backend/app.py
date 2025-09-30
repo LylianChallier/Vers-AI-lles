@@ -15,7 +15,16 @@ from langchain.chat_models import init_chat_model
 
 from setup_graph import talk_to_agent
 
-app = FastAPI(title="MetroMind AI Agent API", description="Backend with LangChain AI Agent")
+app = FastAPI(title="4 mousquet'AIres", description="Backend with Langchain & Langgraph AI Agent")
+
+# Configuration CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-medium-latest')
 
@@ -31,9 +40,39 @@ class ChatResponse(BaseModel):
     response: str
     session_id: str
 
+# Nouveaux modèles pour l'évaluation
+class EvaluationRequest(BaseModel):
+    question: str
+
+class EvaluationResponse(BaseModel):
+    answer: str
+
 chat_sessions: Dict[str, ConversationBufferMemory] = {}
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_model=EvaluationResponse)
+def chat_evaluation(request: EvaluationRequest):
+    """
+    Endpoint dédié pour l'évaluation - comportement stateless
+    Accepte {"question": "..."} et retourne {"answer": "..."}
+    """
+    try:
+        # Pas de gestion de session pour l'évaluation - comportement stateless
+        ai_response = talk_to_agent(state, mgr, request.question)
+
+        # Extraire le texte de la réponse si c'est un objet SpecificInfoOutput
+        if hasattr(ai_response, 'response'):
+            ai_message = ai_response.response
+        elif hasattr(ai_response, 'text'):
+            ai_message = ai_response.text
+        else:
+            ai_message = str(ai_response)
+
+        return EvaluationResponse(answer=ai_message)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur de l'agent: {str(e)}")
+
+@app.post("/chat/conversation", response_model=ChatResponse)
 def chat_with_agent(chat_message: ChatMessage):
     try:
         # Créer ou récupérer la mémoire pour cette session
@@ -51,8 +90,15 @@ def chat_with_agent(chat_message: ChatMessage):
         # Construire la liste des messages avec l'historique + nouveau message
         # messages = chat_history + [HumanMessage(content=chat_message.message)]
         # Invoquer le modèle avec tout l'historique
-        ai_message = talk_to_agent(state, mgr, chat_message.message)
-        # ai_message = model.invoke(chat_message.message)
+        ai_response = talk_to_agent(state, mgr, chat_message.message)
+
+        # Extraire le texte de la réponse si c'est un objet SpecificInfoOutput
+        if hasattr(ai_response, 'response'):
+            ai_message = ai_response.response
+        elif hasattr(ai_response, 'text'):
+            ai_message = ai_response.text
+        else:
+            ai_message = str(ai_response)
         
         # IMPORTANT: Sauvegarder dans la mémoire
         memory.chat_memory.add_user_message(chat_message.message)
