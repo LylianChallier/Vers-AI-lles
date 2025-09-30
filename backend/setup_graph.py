@@ -19,7 +19,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 from embedding import select_top_n_similar_documents
 from create_db import create_documents, save_documents
 from list import longlist
-from mcp_bridge import weather_summary_sync
+from mcp_bridge import weather_summary_sync, route_between_sync, versailles_itinerary_sync
 
 MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-7b-instruct-v0.1')
 
@@ -168,11 +168,71 @@ class WeatherExtraction(BaseModel):
     duration_text: str | None = None
     place: str | None = None
 
+
+class RouteExtraction(BaseModel):
+    is_route: bool = Field(description="True if the user asks for directions or travel time")
+    origin: str | None = None
+    destination: str | None = None
+    profile: Literal["walking", "driving", "cycling"] | None = None
+
 class SpecificInfoAgent():
     def __init__(self):
         self.llm = LLMManager()
     
     def get_necessary_info(self, state: State) -> Dict[str, Any]:
+        # First: detect route/directions requests
+        route_prompt = ChatPromptTemplate.from_messages([
+            ('system', """Tu es un extracteur. Dis si l'utilisateur demande un ITINÉRAIRE ou un TEMPS DE TRAJET
+            entre deux lieux (y compris vers le Château de Versailles). Exemples FR: "comment aller",
+            "itinéraire", "trajet", "combien de temps à pied", "distance", "à vélo", etc.
+            Réponds en JSON strict:
+            {"is_route": bool, "origin": str|null, "destination": str|null, "profile": "walking"|"driving"|"cycling"|null}
+            Si le profil n'est pas explicite ("à pied", "en voiture", "à vélo"), laisse null."""),
+            ('human', "Messages: {messages}\nRéponse JSON stricte:")
+        ])
+        ext: RouteExtraction = self.llm.structured_invoke(route_prompt, RouteExtraction, messages=state.messages)
+
+        if ext.is_route:
+            try:
+                profile = ext.profile or "walking"
+                if not ext.destination or "versailles" in (ext.destination or "").lower():
+                    if not ext.origin:
+                        ext.origin = "Gare de Versailles Château Rive Gauche"
+                    res = versailles_itinerary_sync(origin=ext.origin, profile=profile)
+                else:
+                    origin = ext.origin or "Château de Versailles, France"
+                    res = route_between_sync(origin=origin, destination=ext.destination, profile=profile)
+
+                km = res.get("distance_km_approx")
+                mins = res.get("duration_min_approx")
+                src = res.get("source", {}).get("provider", "osrm")
+                steps = res.get("steps", [])[:10]
+
+                lines = []
+                for step in steps:
+                    road = step.get("road") or ""
+                    modifier = step.get("modifier")
+                    stype = step.get("type") or "step"
+                    dist = step.get("distance_m")
+                    label = f"- {stype}"
+                    if modifier:
+                        label += f" ({modifier})"
+                    if road:
+                        label += f" — {road}"
+                    if dist is not None:
+                        label += f" [{dist} m]"
+                    lines.append(label)
+
+                msg = (
+                    f"**Itinéraire ({profile})**\n"
+                    f"Distance ≈ {km} km · Durée ≈ {mins} min (source: {src})\n\n"
+                    f"**Étapes clés**:\n" + ("\n".join(lines) if lines else "Instructions non disponibles.")
+                )
+                return {"messages": AIMessage(content=msg)}
+            except Exception as e:
+                return {"messages": AIMessage(content=f"Désolé, l'itinéraire n'a pas pu être calculé ({e}).")}
+
+        # Otherwise: normal specific-information flow
         prompt = ChatPromptTemplate.from_messages(
             [('system', """You are an expert AI assistant specialised in providing specific information about the 
             castle of Versailles based on user questions.
@@ -181,13 +241,10 @@ class SpecificInfoAgent():
             If the question is off-topic, respond with "Désolé, je ne peux répondre qu'à des questions sur le château de Versailles."
             
             Your response must be a JSON object (without markdown code blocks or any other formatting) with the following fields:
-            {{ "response": str
-            }}
-            CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
+            { "response": str }
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
-        
-        response = self.llm.structured_invoke(prompt, SpecificInfoOutput, messages = state.messages)
 
+        response = self.llm.structured_invoke(prompt, SpecificInfoOutput, messages=state.messages)
         return {"messages": AIMessage(content=response.response)}
 
 class NecessaryInfoForRoad(BaseModel):
