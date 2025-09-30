@@ -7,36 +7,25 @@
 		<link rel="stylesheet" href="./styles.css" />
 	</head>
 	<body>
-		<div class="app">
-			<aside class="sidebar">
-				<header class="sidebar-header">
-					<h1>Itinéraire</h1>
-					<div class="summary">
-						<span><strong id="nbEtapes">0</strong> étapes</span>
-						<span>•</span>
-						<span>Durée: <strong id="dureeTotal">—</strong></span>
-					</div>
-				</header>
-				<div id="listeEtapes" class="etapes"></div>
-			</aside>
+		<div class="container">
+			<h1 class="title">Carte du Château de Versailles</h1>
 
-			<main class="map-container">
-				<section style="max-width: 100%;">
-					<h2 style="margin: 8px 0 12px; font-size: 16px; color: #c7d3e0; font-weight: 600;">Carte des tuiles (section à largeur fixe)</h2>
-					<div id="mapWrapper" class="map-wrapper" aria-label="Carte des tuiles">
-						<div id="tileLayer" class="tile-layer" aria-hidden="true"></div>
+			<div class="search-container">
+				<input type="text" id="searchInput" placeholder="Rechercher un lieu..." class="search-input">
+				<div id="searchResults" class="search-results"></div>
+			</div>
 
-						<div class="map-controls" role="toolbar" aria-label="Contrôles de la carte">
-							<button type="button" class="btn" aria-label="Zoomer" onclick="zoomIn()">＋</button>
-							<button type="button" class="btn" aria-label="Dézoomer" onclick="zoomOut()">－</button>
-							<button type="button" class="btn" aria-label="Réinitialiser la vue" onclick="resetView()">↺</button>
-						</div>
-					</div>
-					<p style="margin-top: 10px; color: #9fb0c4; font-size: 12px;">Les limites de la carte sont visibles : la zone est fixée à la taille des tuiles au niveau de zoom 1.</p>
-				</section>
-			</main>
+			<div id="mapWrapper" class="map-wrapper" aria-label="Carte des tuiles">
+				<div id="tileLayer" class="tile-layer" aria-hidden="true"></div>
+
+				<div class="map-controls" role="toolbar" aria-label="Contrôles de la carte">
+					<button type="button" class="btn" aria-label="Zoomer" onclick="zoomIn()">＋</button>
+					<button type="button" class="btn" aria-label="Dézoomer" onclick="zoomOut()">－</button>
+					<button type="button" class="btn" aria-label="Réinitialiser la vue" onclick="resetView()">↺</button>
+				</div>
+			</div>
 		</div>
 
-			<script src="./map.js"></script>
+		<script src="./map.js"></script>
 	</body>
 	</html>
