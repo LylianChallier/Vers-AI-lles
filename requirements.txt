@@ -1,13 +1,29 @@
+# Core LangChain
 langchain
 langchain-community
 langchain-mistralai
-mistralai
-requests
-pydantic
+
+# FastAPI & Server
 fastapi
 uvicorn
+# fastmcp
+
+# Vector Store & Embeddings
+chromadb
+sentence-transformers
+langchain-chroma
+
+# Data & Utils
+requests
+pydantic
 redis
 pandas
 python-dotenv
+
+# Graph & State Management
 langgraph
+
+# Testing
 pytest
+pytest-asyncio
+httpx
