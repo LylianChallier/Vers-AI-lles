@@ -12,6 +12,8 @@ from langchain_core.runnables import Runnable
 from langgraph.graph import START, StateGraph
 from datetime import datetime
 import os
+import warnings
+warnings.filterwarnings('ignore', message='Could not download mistral tokenizer')
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -41,18 +43,23 @@ class LLMManager():
     def __init__(self):
         self.llm = ChatMistralAI(model=MISTRAL_MODEL, temperature=0)
 
-    def invoke(self, prompt: ChatPromptTemplate, **kwargs) -> str:
-      agent = self.llm
-      messages = prompt.format_messages(**kwargs)
-      response = agent.invoke(messages)
-      return response.content
+    def structured_invoke(self, prompt: ChatPromptTemplate, output_model: type[BaseModel], **kwargs) -> str:
+        structured_llm = self.llm.with_structured_output(output_model)
+        messages = prompt.format_messages(**kwargs)
+        response = structured_llm.invoke(messages)
+        return response
 
+class IntentOutput(BaseModel):
+    """Modèle pour la sortie de l'agent d'intention"""
+    user_wants_road_in_versailles: bool = Field(description="L'utilisateur veut visiter le château")
+    user_wants_specific_info: bool = Field(description="L'utilisateur veut des informations spécifiques")
+    user_asks_off_topic: bool = Field(description="L'utilisateur pose une question hors sujet")
 
 class IntentAgent():
     def __init__(self):
         self.llm = LLMManager()
-    
-    def get_user_intent(self, state: State) -> Dict[str, Any]:
+
+    def get_user_intent(self, state: State) -> IntentOutput:
         prompt = ChatPromptTemplate.from_messages(
             [('system', """You are an expert AI assistant that analyzes user messages to determine their
             intent and extract relevant information. Your role is to identify if the user :
@@ -86,15 +93,13 @@ class IntentAgent():
 
             """), ("human"," ===Messages: {messages}")])
 
-        response = self.llm.invoke(prompt, messages = state.messages)
-        output_parser = JsonOutputParser()
-        parsed_response = output_parser.parse(response)
-
+        response = self.llm.structured_invoke(prompt, IntentOutput, messages=state.messages)
         return {
-            "user_wants_road_in_versailles": parsed_response["user_wants_road_in_versailles"],
-            "user_wants_specific_info": parsed_response["user_wants_specific_info"],
-            "user_asks_off_topic": parsed_response["user_asks_off_topic"]
+            "user_wants_road_in_versailles": response.user_wants_road_in_versailles,
+            "user_wants_specific_info": response.user_wants_specific_info,
+            "user_asks_off_topic": response.user_asks_off_topic,
         }
+
 class OffTopicAgent():
     def __init__(self):
         self.llm = LLMManager()
@@ -103,6 +108,10 @@ class OffTopicAgent():
         return {
         "messages": ["Désolé, je ne peux répondre qu'à des questions sur le château de Versailles..."]
     }
+
+class SpecificInfoOutput(BaseModel):
+    """Modèle pour la sortie de l'agent d'information spécifique"""
+    response: str = Field(description="Réponse à la question spécifique sur le château de Versailles")
 
 class SpecificInfoAgent():
     def __init__(self):
@@ -113,7 +122,7 @@ class SpecificInfoAgent():
             [('system', """You are an expert AI assistant specialised in providing specific information about the 
             castle of Versailles based on user questions.
             Your role is to answer questions about the castle of Versailles using your knowledge.
-            If you don't know the answer, respond with "Je ne sais pas".
+            If you don't know the answer, respond with "Désolé, je n'ai pas d'information là-dessus".
             If the question is off-topic, respond with "Désolé, je ne peux répondre qu'à des questions sur le château de Versailles."
             
             Your response must be a JSON object (without markdown code blocks or any other formatting) with the following fields:
@@ -122,12 +131,24 @@ class SpecificInfoAgent():
             CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         
-        response = self.llm.invoke(prompt, messages = state.messages)
+        response = self.llm.structured_invoke(prompt, SpecificInfoOutput, messages = state.messages)
         output_parser = JsonOutputParser()
         parsed_response = output_parser.parse(response)
 
         return {"messages": AIMessage(content=parsed_response["response"])}
 
+class NecessaryInfoForRoad(BaseModel):
+    """Modèle pour les informations nécessaires à l'itinéraire"""
+    date: str | None = Field(default=None, description="Date de la visite")
+    hour: str | None = Field(default=None, description="Heure de la visite")
+    group_type: str | None = Field(default=None, description="Type de groupe (famille, amis, solo...)")
+    time_of_visit: str | None = Field(default=None, description="Durée de la visite")
+    budget: str | None = Field(default=None, description="Budget de la visite")
+
+class ItineraryInfoOutput(BaseModel):
+    """Modèle pour la sortie de l'agent d'informations d'itinéraire"""
+    response: str = Field(description="La question ou réponse à l'utilisateur")
+    necessary_info_for_road: NecessaryInfoForRoad = Field(description="Les informations collectées")
 
 class ItineraryInfoAgent():
     def __init__(self):
@@ -163,13 +184,15 @@ class ItineraryInfoAgent():
             CRITICAL : Be really careful to ALWAYS return a valid JSON object with the exact fields and types specified above.
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         
-        response = self.llm.invoke(prompt, messages = state.messages,
-                                   necessary_info_for_road = state.necessary_info_for_road, current_date = datetime.today().strftime('%Y-%m-%d'))
-        output_parser = JsonOutputParser()
-        parsed_response = output_parser.parse(response)
+        response = self.llm.structured_invoke(prompt, ItineraryInfoOutput, messages=state.messages, necessary_info_for_road=state.necessary_info_for_road, current_date=datetime.today().strftime('%Y-%m-%d'))
+        return {
+            "necessary_info_for_road": response.necessary_info_for_road.model_dump(),
+            "messages": AIMessage(content=response.response),
+        }
 
-        return {"necessary_info_for_road" : parsed_response["necessary_info_for_road"],
-                "messages": AIMessage(content=parsed_response["response"])}
+class RoadOutput(BaseModel):
+    """Modèle pour la sortie de l'agent de création d'itinéraire"""
+    response: str = Field(description="L'itinéraire détaillé pour l'utilisateur")
 
 class RoadInVersaillesAgent():
     def __init__(self):
@@ -199,18 +222,18 @@ class RoadInVersaillesAgent():
             """), ("human"," ===Messages: {messages}  \n\n ===Your answer in the user's language : ")])
         query_client = "Le client veut visiter le château de Versailles le {date} à {hour} avec un groupe de type {group_type}. " \
                           "Il prévoit de visiter pendant {time_of_visit} heures et son budget est {budget}.".format(**state.necessary_info_for_road)
-        rag_context = select_top_n_similar_documents(query_client, documents=longlist, n=10, metric='cosine')
+        rag_context = select_top_n_similar_documents(query_client, documents=longlist, n=50, metric='euclidian')
         print(query_client)
         print("Top documents to use as context:")
         for doc in rag_context:
-            print(f"- {doc['id']}: {doc['texte']}...")  # Print first 100 characters of content
+            print(f"- {doc['id']}: {doc['texte']}")  # Print first 100 characters of content
 
         data=", ".join([doc['texte'] for doc in rag_context])
-        response = self.llm.invoke(prompt, messages = state.messages, necessary_info_for_road = state.necessary_info_for_road, rag_context = data)
-        output_parser = JsonOutputParser()
-        parsed_response = output_parser.parse(response)
 
-        return {"messages": AIMessage(content=parsed_response["response"])}
+        response = self.llm.structured_invoke(prompt, RoadOutput, messages=state.messages, necessary_info_for_road=state.necessary_info_for_road, rag_context=data)
+        return {
+            "messages": AIMessage(content=response.response),
+        }
 
 class Conditions():
     @staticmethod
@@ -310,20 +333,48 @@ class GraphManager():
 
     def display_image(self):
         runnable = self.return_graph()
-        import nest_asyncio
-        nest_asyncio.apply()
-        display(
-            Image(
-                runnable.get_graph().draw_mermaid_png(draw_method=MermaidDrawMethod.PYPPETEER)
-
-            )
-        )
+        
+        # Méthode 1 : Sauvegarder le code Mermaid (toujours fonctionne)
+        mermaid_code = runnable.get_graph().draw_mermaid()
+        
+        # Sauvegarder dans un fichier
+        with open("graph.mmd", "w") as f:
+            f.write(mermaid_code)
+        
+        print("✅ Graphe Mermaid sauvegardé dans 'graph.mmd'")
+        print("📊 Pour visualiser :")
+        print("   - Ouvrez https://mermaid.live/")
+        print("   - Collez le contenu de graph.mmd")
+        print("   - Ou utilisez l'extension VSCode 'Markdown Preview Mermaid Support'")
+        
+        # Méthode 2 : Créer un fichier HTML pour visualisation locale
+        html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+                <script>mermaid.initialize({{ startOnLoad: true }});</script>
+            </head>
+            <body>
+                <div class="mermaid">
+            {mermaid_code}
+                </div>
+            </body>
+            </html>
+            """
+        with open("graph.html", "w") as f:
+            f.write(html_content)
+        
+        print("✅ Fichier HTML sauvegardé dans 'graph.html'")
+        print("🌐 Ouvrez 'graph.html' dans votre navigateur pour voir le graphe")
+        
+        return mermaid_code
 
 from langchain_core.messages import HumanMessage
 
-def talk_to_agent(state, mgr, query):
+def talk_to_agent(state, mgr, query=None):
+    query = input("You: ") if query is None else query
     state.messages+=[HumanMessage(content = query)]
-
     response = mgr.run_agent(state)
     # Update state while preserving messages
     for key, value in response.items():
@@ -331,5 +382,19 @@ def talk_to_agent(state, mgr, query):
             setattr(state, key, value)
         else:
             state.messages = value
-
     return state.messages[-1].content
+
+# À la toute fin du fichier, après la fonction talk_to_agent
+
+if __name__ == "__main__":
+    # Initialiser le graphe
+    mgr = GraphManager()
+    
+    # Créer un état initial
+    state = State()
+    
+    # Tester avec une question
+    print(INIT_MESSAGE)
+    while True:
+        response = talk_to_agent(state, mgr)
+        print(response)
