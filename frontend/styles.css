@@ -1,0 +1,260 @@
+/* Masquer le header Streamlit par défaut */
+header[data-testid="stHeader"] {
+    display: none;
+}
+
+/* Masquer le menu hamburger */
+#MainMenu {
+    visibility: hidden;
+}
+
+/* Masquer le footer */
+footer {
+    visibility: hidden;
+}
+
+/* Fond blanc inspiré du site Versailles */
+.stApp {
+    background-color: #fafafa;
+}
+
+/* Header style Versailles - Inspiré du site officiel */
+.versailles-header {
+    background-color: #000000;
+    border-bottom: 1px solid #333333;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Container du header */
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Top bar avec logo et utilitaires */
+.header-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #333333;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-column: 2;
+}
+
+.header-logo img {
+    height: 50px;
+    object-fit: contain;
+}
+
+.header-utils {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    justify-content: flex-end;
+    grid-column: 3;
+}
+
+.search-icon, .lang-toggle {
+    color: #fafafa !important;
+    text-decoration: none !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.search-icon:hover, .lang-toggle:hover {
+    color: #c9a961 !important;
+    text-decoration: none !important;
+}
+
+/* Navigation principale */
+.header-nav {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    padding: 1rem 0;
+}
+
+.nav-link {
+    color: #fafafa !important;
+    text-decoration: none !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+    transition: color 0.2s ease;
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.nav-link:hover {
+    color: #c9a961 !important;
+    text-decoration: none !important;
+}
+
+.nav-link:visited {
+    color: #fafafa !important;
+    text-decoration: none !important;
+}
+
+.nav-link:active {
+    color: #fafafa !important;
+    text-decoration: none !important;
+}
+
+.nav-link:link {
+    color: #fafafa !important;
+    text-decoration: none !important;
+}
+
+/* Ajouter un padding en haut pour compenser le header fixe */
+.block-container {
+    padding-top: 150px !important;
+}
+
+/* Conteneur pour les messages */
+.chat-message {
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Message utilisateur */
+.user-message {
+    background-color: #c9a961;
+    color: #000000;
+    margin-left: 20%;
+}
+
+/* Message IA */
+.assistant-message {
+    background-color: #e8d7a8;
+    color: #000000;
+    margin-right: 20%;
+    border-left: 4px solid #c9a961;
+}
+
+/* Étiquette de rôle */
+.message-label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #000000;
+}
+
+/* Contenu du message */
+.message-content {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #000000;
+}
+
+/* Titre */
+h1 {
+    color: #000000 !important;
+}
+
+/* Texte général */
+p, label {
+    color: #000000 !important;
+}
+
+/* Spinner de chargement */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(74, 158, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #4a9eff;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Input de texte */
+input[type="text"] {
+    background-color: #f5f5dc !important;
+    border: 2px solid #c9a961 !important;
+    color: #2c2c2c !important;
+    border-radius: 8px !important;
+    padding: 0.75rem !important;
+}
+
+input[type="text"]:focus {
+    outline: none !important;
+    border-color: #c9a961 !important;
+    box-shadow: 0 0 0 2px rgba(201, 169, 97, 0.2) !important;
+}
+
+/* Cibler aussi les inputs Streamlit */
+.stTextInput input {
+    background-color: #f5f5dc !important;
+    border: 2px solid #c9a961 !important;
+    color: #2c2c2c !important;
+    border-radius: 8px !important;
+}
+
+.stTextInput input:focus {
+    outline: none !important;
+    border-color: #c9a961 !important;
+    box-shadow: 0 0 0 2px rgba(201, 169, 97, 0.2) !important;
+}
+
+input[type="text"]::placeholder {
+    color: #888888 !important;
+}
+
+/* Bouton envoyer */
+.stButton button,
+.stFormSubmitButton button,
+button[type="submit"],
+button[kind="formSubmit"],
+button[data-testid="stFormSubmitButton"] button {
+    background-color: #f5f5dc !important;
+    border: 2px solid #c9a961 !important;
+    color: #000000 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.stButton button:hover,
+.stFormSubmitButton button:hover,
+button[type="submit"]:hover,
+button[kind="formSubmit"]:hover,
+button[data-testid="stFormSubmitButton"] button:hover {
+    background-color: #c9a961 !important;
+    color: #ffffff !important;
+    border-color: #c9a961 !important;
+}
+
+.stButton button:active,
+.stFormSubmitButton button:active,
+button[type="submit"]:active,
+button[kind="formSubmit"]:active,
+button[data-testid="stFormSubmitButton"] button:active {
+    transform: scale(0.98) !important;
+}
