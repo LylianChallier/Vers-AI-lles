@@ -1,0 +1,26 @@
+#version: "4"
+
+services:
+  backend:
+    build: ./backend  # Chemin vers le dossier contenant le Dockerfile
+    ports:
+      - "8001:8001"   # Mappe le port 5000 du conteneur vers le port 5000 de ta machine
+    volumes:
+      - ./backend:/code  # Monte le dossier backend dans /code du conteneur (pour le développement)
+    environment:
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - MISTRAL_MODEL=${MISTRAL_MODEL}
+    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
+  
+  frontend:
+    build: ./frontend  # Chemin vers le dossier contenant le Dockerfile
+    ports:
+      - "8501:8501"   # Mappe le port 8501 du conteneur vers le port 8501 de ta machine
+    volumes:
+      - ./frontend:/app  # Monte le dossier frontend dans /app du conteneur
+    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
+    depends_on:
+      - backend
+  
+  

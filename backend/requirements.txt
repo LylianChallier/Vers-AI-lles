@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+mistralai
+#sentence-transformers
+langchain
+langchain-mistralai
+langgraph
+numpy
+langchain-core
