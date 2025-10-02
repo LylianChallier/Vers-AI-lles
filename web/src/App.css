@@ -84,10 +84,16 @@
   justify-content: center;
   width: 48px;
   height: 48px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #fbe29d, #f1c45b);
-  color: #1a2030;
-  box-shadow: 0 12px 28px rgba(12, 14, 22, 0.4);
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.brand__symbol img {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(6, 12, 26, 0.35);
 }
 
 .brand h1 {

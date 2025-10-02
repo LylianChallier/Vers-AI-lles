@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion'
-import { Crown } from 'lucide-react'
 import { LangToggle } from './LangToggle'
 
 export function Header({ copy, lang, onLangChange }) {
@@ -13,7 +12,12 @@ export function Header({ copy, lang, onLangChange }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120 }}
           >
-            <Crown size={24} />
+            <img
+              src="/icons/versailles-favicon-blue-64.png"
+              alt="Versailles Concierge mark"
+              width="48"
+              height="48"
+            />
           </motion.div>
           <div>
             <h1>{copy.title}</h1>
