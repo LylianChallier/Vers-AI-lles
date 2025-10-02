@@ -17,8 +17,8 @@ COPY mcp_servers /app/mcp_servers
 
 ENV PYTHONPATH="/app"
 
-EXPOSE 8001
+EXPOSE 8002
 
 WORKDIR /app/backend
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8002"]

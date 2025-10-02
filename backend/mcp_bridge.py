@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 import re
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 # Import the coroutine tools and their input models (work even without fastmcp)
 from mcp_servers.weather_server import WeatherWindowInput, get_weather_summary
@@ -95,4 +95,47 @@ __all__ = [
     "weather_summary_sync",
     "versailles_itinerary_sync",
     "route_between_sync",
+    "multi_route_sync",
 ]
+
+
+def multi_route_sync(places: List[str], profile: str = "walking") -> dict:
+    """Compute a multi-stop route by chaining route_between across consecutive places.
+    Returns a MultiLineString geometry, per-segment details, and resolved waypoints.
+    """
+    if not places or len(places) < 2:
+        raise ValueError("At least two places are required")
+
+    segments: List[Dict[str, Any]] = []
+    coords_segments: List[List[List[float]]] = []  # [[ [lon,lat], ... ], ...]
+    waypoints: List[Dict[str, Any]] = []
+
+    # Resolve first waypoint lazily from first segment response
+    for i in range(len(places) - 1):
+        a, b = places[i], places[i + 1]
+        seg = route_between_sync(origin=a, destination=b, profile=profile)
+        # Collect resolved waypoints as we go
+        if i == 0:
+            waypoints.append(seg.get("origin"))
+        waypoints.append(seg.get("destination"))
+
+        geom = seg.get("geometry") or {}
+        if isinstance(geom, dict) and geom.get("type") == "LineString":
+            coords_segments.append(list(geom.get("coordinates") or []))
+
+        segments.append({
+            "origin": seg.get("origin"),
+            "destination": seg.get("destination"),
+            "distance_m": seg.get("distance_m"),
+            "duration_s": seg.get("duration_s"),
+            "steps": seg.get("steps"),
+            "source": seg.get("source"),
+        })
+
+    geometry: Dict[str, Any] = {"type": "MultiLineString", "coordinates": coords_segments}
+    return {
+        "profile": profile,
+        "waypoints": waypoints,
+        "segments": segments,
+        "geometry": geometry,
+    }

@@ -13,7 +13,7 @@ from setup_graph import GraphManager, GraphManagerEval, State, INIT_MESSAGE
 # from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
 from setup_graph import talk_to_agent
-from mcp_bridge import weather_summary_sync, versailles_itinerary_sync, route_between_sync
+from mcp_bridge import weather_summary_sync, versailles_itinerary_sync, route_between_sync, multi_route_sync
 
 app = FastAPI(title="4 mousquet'AIres", description="Backend with Langchain & Langgraph AI Agent")
 
@@ -39,6 +39,8 @@ class ChatMessage(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     session_id: str
+    route: dict | None = None
+    plan: dict | None = None
 
 # Nouveaux modèles pour l'évaluation
 class EvaluationRequest(BaseModel):
@@ -58,6 +60,10 @@ class WeatherWindowRequest(BaseModel):
 class RouteRequest(BaseModel):
     origin: str
     destination: Optional[str] = None
+    profile: Optional[str] = "walking"
+
+class MultiRouteRequest(BaseModel):
+    places: list[str]
     profile: Optional[str] = "walking"
 
 chat_sessions: Dict[str, ConversationBufferMemory] = {}
@@ -105,19 +111,26 @@ def chat_with_agent(chat_message: ChatMessage):
         # Invoquer le modèle avec tout l'historique
         ai_response = talk_to_agent(state, mgr, chat_message.message)
 
-        # Extraire le texte de la réponse si c'est un objet SpecificInfoOutput
+        # Extraire le texte de la réponse + éventuelle route
         if hasattr(ai_response, 'response'):
             ai_message = ai_response.response
         elif hasattr(ai_response, 'text'):
             ai_message = ai_response.text
         else:
             ai_message = str(ai_response)
+        route_payload = getattr(ai_response, 'route', None)
+        plan_payload = getattr(ai_response, 'plan', None)
         
         # IMPORTANT: Sauvegarder dans la mémoire
         memory.chat_memory.add_user_message(chat_message.message)
         memory.chat_memory.add_ai_message(ai_message)
         
-        return ChatResponse(response=ai_message, session_id=chat_message.session_id)
+        return ChatResponse(
+            response=ai_message,
+            session_id=chat_message.session_id,
+            route=route_payload,
+            plan=plan_payload,
+        )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur de l'agent: {str(e)}")
@@ -156,6 +169,16 @@ def tool_route_between(req: RouteRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"route tool error: {e}")
+
+
+@app.post("/tools/route_multi")
+def tool_route_multi(req: MultiRouteRequest):
+    try:
+        return multi_route_sync(places=req.places, profile=req.profile or "walking")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"multi-route tool error: {e}")
 
 
 @app.get("/chat/sessions")

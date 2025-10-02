@@ -43,24 +43,18 @@ if not FASTMCP_AVAILABLE:  # pragma: no cover - informational only
         RuntimeWarning,
     )
 
-
-# --------- Models ---------
 class GeocodeInput(BaseModel):
     place: str = Field(..., description="Freeform place name or address")
-
 
 class RouteBetweenInput(BaseModel):
     origin: str = Field(..., description="Start place name/address")
     destination: str = Field(..., description="End place name/address")
     profile: Literal["walking", "driving", "cycling"] = Field("walking")
 
-
 class VersaillesItineraryInput(BaseModel):
     origin: str = Field(..., description="Start place name/address")
     profile: Literal["walking", "driving", "cycling"] = Field("walking")
 
-
-# --------- Helpers ---------
 async def _geocode_nominatim(client: httpx.AsyncClient, place: str) -> dict:
     params = {"q": place, "format": "json", "limit": 1, "addressdetails": 0}
     headers = {"User-Agent": USER_AGENT}
@@ -134,7 +128,8 @@ async def _route(client: httpx.AsyncClient, origin: tuple[float, float], destina
     o_lat, o_lon = origin
     d_lat, d_lon = destination
     url = f"{OSRM_ROUTE}/{profile}/{o_lon},{o_lat};{d_lon},{d_lat}"
-    params = {"overview": "false", "steps": "true", "alternatives": "false", "annotations": "false", "geometries": "geojson"}
+    # Request a lightweight overview geometry for map display and per-step details for instructions
+    params = {"overview": "simplified", "steps": "true", "alternatives": "false", "annotations": "false", "geometries": "geojson"}
     r = await client.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
@@ -163,6 +158,8 @@ async def _route(client: httpx.AsyncClient, origin: tuple[float, float], destina
         "distance_m": int(route.get("distance", 0)),
         "duration_s": int(route.get("duration", 0)),
         "steps": steps[:200],  # cap just in case
+        # GeoJSON LineString (lon,lat). Frontend can render after swapping to (lat,lon)
+        "geometry": route.get("geometry"),
     }
 
 
@@ -175,7 +172,7 @@ async def _route_mapbox(client: httpx.AsyncClient, origin: tuple[float, float], 
     url = f"https://api.mapbox.com/directions/v5/mapbox/{profile}/{o_lon},{o_lat};{d_lon},{d_lat}"
     params = {
         "alternatives": "false",
-        "overview": "false",
+        "overview": "simplified",
         "steps": "true",
         "geometries": "geojson",
         "language": "fr",
@@ -202,6 +199,7 @@ async def _route_mapbox(client: httpx.AsyncClient, origin: tuple[float, float], 
         "distance_m": int(route.get("distance", 0)),
         "duration_s": int(route.get("duration", 0)),
         "steps": steps[:200],
+        "geometry": route.get("geometry"),
     }
 
 
@@ -240,10 +238,10 @@ async def _route_ors(client: httpx.AsyncClient, origin: tuple[float, float], des
         "distance_m": int(summary.get("distance", 0)),
         "duration_s": int(summary.get("duration", 0)),
         "steps": steps[:200],
+        "geometry": feature.get("geometry"),
     }
 
 
-# --------- Tools ---------
 @app.tool()
 async def geocode_place(inp: GeocodeInput) -> dict:
     """
@@ -293,6 +291,7 @@ async def route_between(inp: RouteBetweenInput) -> dict:
         "duration_min_approx": mins,
         "distance_km_approx": round(km, 1),
         "steps": route["steps"],
+        "geometry": route.get("geometry"),
         "source": {
             "provider": provider,
             "endpoint": OSRM_ROUTE if provider == "osrm" else ("mapbox" if provider == "mapbox" else "openrouteservice")
