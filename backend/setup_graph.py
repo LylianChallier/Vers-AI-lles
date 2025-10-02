@@ -295,7 +295,7 @@ class OffTopicAgent():
             ('system', """Tu es un extracteur. Ta tâche: dire si l'utilisateur demande la MÉTÉO
             (éventuellement pour Versailles) et extraire: date (YYYY-MM-DD), heure, durée (texte), lieu.
             Réponds en JSON strict:
-            {"is_weather": bool, "date": str|null, "hour": str|null, "duration_text": str|null, "place": str|null}"""),
+            {{"is_weather": bool, "date": str|null, "hour": str|null, "duration_text": str|null, "place": str|null}}"""),
             ('human', "Messages: {messages}\nRéponse JSON stricte:")
         ])
         ext: WeatherExtraction = self.llm.structured_invoke(extract_prompt, WeatherExtraction, messages=state.messages)
@@ -372,7 +372,7 @@ class SpecificInfoAgent():
             entre deux lieux (y compris vers le Château de Versailles). Exemples FR: "comment aller",
             "itinéraire", "trajet", "combien de temps à pied", "distance", "à vélo", etc.
             Réponds en JSON strict:
-            {"is_route": bool, "origin": str|null, "destination": str|null, "profile": "walking"|"driving"|"cycling"|null}
+            {{"is_route": bool, "origin": str|null, "destination": str|null, "profile": "walking"|"driving"|"cycling"|null}}
             Si le profil n'est pas explicite ("à pied", "en voiture", "à vélo"), laisse null."""),
             ('human', "Messages: {messages}\nRéponse JSON stricte:")
         ])

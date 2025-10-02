@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import './App.css'
 import 'leaflet/dist/leaflet.css'
-import { MapContainer, TileLayer, Marker, Polyline, LayersControl } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Polyline, LayersControl, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import marker2x from 'leaflet/dist/images/marker-icon-2x.png'
 import marker1x from 'leaflet/dist/images/marker-icon.png'
@@ -343,6 +343,9 @@ function VersaillesConcierge() {
   })
   const [plan, setPlan] = useState(null)
   const [showMap, setShowMap] = useState(false)
+  const [userLocation, setUserLocation] = useState(null)
+  const [locationError, setLocationError] = useState('')
+  const [locationLoading, setLocationLoading] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId, setSessionId] = useState(() => getStoredValue(STORAGE_KEYS.session, createSessionId()))
 
@@ -374,7 +377,34 @@ function VersaillesConcierge() {
   const planTimeline = Array.isArray(plan?.timeline) ? plan.timeline : []
   const planWaypoints = Array.isArray(plan?.waypoints) ? plan.waypoints : []
   const planSegments = useMemo(() => toLeafletCoords(plan?.geometry), [plan?.geometry])
-  const hasMapData = planWaypoints.length > 0 || planSegments.some((segment) => segment.length > 0)
+  const hasMapData = planWaypoints.length > 0 || planSegments.some((segment) => segment.length > 0) || !!userLocation
+  const mapCenterLat = planWaypoints[0]?.lat ?? userLocation?.lat ?? 48.8049
+  const mapCenterLon = planWaypoints[0]?.lon ?? userLocation?.lon ?? 2.1204
+  const locationButtonLabel = locationLoading
+    ? lang === 'fr'
+      ? 'Localisation…'
+      : 'Locating…'
+    : userLocation
+    ? lang === 'fr'
+      ? 'Actualiser ma position'
+      : 'Update my location'
+    : lang === 'fr'
+    ? 'Utiliser ma position'
+    : 'Use my location'
+  const locationInfoText = userLocation
+    ? lang === 'fr'
+      ? `Position partagée (${userLocation.lat}, ${userLocation.lon}${
+          userLocation.accuracy ? ` ±${userLocation.accuracy} m` : ''
+        }).`
+      : `Location shared (${userLocation.lat}, ${userLocation.lon}${
+          userLocation.accuracy ? ` ±${userLocation.accuracy} m` : ''
+        }).`
+    : locationError ||
+      (lang === 'fr'
+        ? 'Autorisez la localisation pour adapter l’itinéraire et les trajets.'
+        : 'Allow location so the concierge can tailor routes and timing tips.')
+  const locationInfoHasError = Boolean(locationError)
+  const locationInfoClass = locationInfoHasError ? 'location-share__info location-share__info--error' : 'location-share__info'
 
   useEffect(() => {
     if (!chatFeedRef.current) return
@@ -478,6 +508,12 @@ function VersaillesConcierge() {
       window.localStorage.setItem(STORAGE_KEYS.lang, lang)
     } catch (error) {}
   }, [lang])
+
+  useEffect(() => {
+    if (!userLocation) return
+    const formatted = `${userLocation.lat}, ${userLocation.lon}`
+    setOrigin(formatted)
+  }, [userLocation])
 
   // ---- Routing helpers ----
   function lineStringToLatLngs(geometry) {
@@ -598,6 +634,65 @@ function VersaillesConcierge() {
     }
   }
 
+  const requestUserLocation = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setLocationError(
+        lang === 'fr'
+          ? "La géolocalisation n'est pas disponible sur ce navigateur."
+          : 'Geolocation is not available in this browser.'
+      )
+      return
+    }
+
+    setLocationLoading(true)
+    setLocationError('')
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords
+        const normalized = {
+          lat: Number(latitude.toFixed(5)),
+          lon: Number(longitude.toFixed(5)),
+          accuracy: Number.isFinite(accuracy) ? Math.round(accuracy) : null,
+        }
+        setUserLocation(normalized)
+        setLocationLoading(false)
+        setShowMap(true)
+      },
+      (error) => {
+        setLocationLoading(false)
+        let message
+        switch (error.code) {
+          case 1:
+            message =
+              lang === 'fr'
+                ? 'Autorisation de localisation refusée. Vous pouvez réessayer depuis les paramètres du navigateur.'
+                : 'Location permission denied. You can retry from your browser settings.'
+            break
+          case 2:
+            message =
+              lang === 'fr'
+                ? 'Impossible de récupérer votre position pour le moment.'
+                : 'Unable to retrieve your position right now.'
+            break
+          case 3:
+            message =
+              lang === 'fr'
+                ? 'La localisation a pris trop de temps. Réessayez près d’une fenêtre ou en vérifiant votre connexion.'
+                : 'Location timed out. Try again near a window or after checking your connection.'
+            break
+          default:
+            message =
+              lang === 'fr'
+                ? 'Un imprévu a empêché la localisation. Réessayez dans un instant.'
+                : 'Something went wrong while locating you. Please try again shortly.'
+        }
+        setLocationError(message)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    )
+  }
+
   function pushRouteToChat() {
     const text = lang === 'fr'
       ? `Point de départ: ${origin}. Destination: ${destination}. Propose un itinéraire de visite avec horaires optimisés et conseils météo.`
@@ -612,7 +707,16 @@ function VersaillesConcierge() {
 
     const personaHint = PERSONA_HINTS[persona] ?? ''
     const langHint = lang === 'fr' ? LANG_HINTS.fr : ''
-    const enrichedText = [personaHint, langHint, text].filter(Boolean).join('\n')
+    const locationHint = userLocation
+      ? lang === 'fr'
+        ? `Ma position actuelle: latitude ${userLocation.lat}, longitude ${userLocation.lon}${
+            userLocation.accuracy ? ` (±${userLocation.accuracy} m)` : ''
+          }.`
+        : `My current position: latitude ${userLocation.lat}, longitude ${userLocation.lon}${
+            userLocation.accuracy ? ` (±${userLocation.accuracy} m)` : ''
+          }.`
+      : ''
+    const enrichedText = [personaHint, langHint, locationHint, text].filter(Boolean).join('\n')
 
     setMessages((prev) => [...prev, { role: 'user', text }])
     setInput('')
@@ -930,13 +1034,16 @@ function VersaillesConcierge() {
                 </div>
               ) : null}
             </div>
+            <div className="location-share">
+              <Pill icon={MapPin} onClick={requestUserLocation} disabled={locationLoading}>
+                {locationButtonLabel}
+              </Pill>
+              <span className={locationInfoClass}>{locationInfoText}</span>
+            </div>
             {showMap && hasMapData ? (
               <div className="map-wrap" style={{ height: 400, marginTop: 12, borderRadius: 12, overflow: 'hidden' }}>
                 <MapContainer
-                  center={[
-                    planWaypoints[0]?.lat ?? 48.8049,
-                    planWaypoints[0]?.lon ?? 2.1204,
-                  ]}
+                  center={[mapCenterLat, mapCenterLon]}
                   zoom={15}
                   style={{ height: '100%', width: '100%' }}
                   scrollWheelZoom={false}
@@ -956,6 +1063,12 @@ function VersaillesConcierge() {
                       <Polyline key={`seg-${i}`} positions={segment} color="#f1c45b" weight={4} />
                     ) : null
                   )}
+
+                  {userLocation ? (
+                    <Marker position={[userLocation.lat, userLocation.lon]}>
+                      <Popup>{lang === 'fr' ? 'Vous êtes ici' : 'You are here'}</Popup>
+                    </Marker>
+                  ) : null}
                 </MapContainer>
               </div>
             ) : null}
