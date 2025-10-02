@@ -5,6 +5,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from datetime import datetime
 from langchain.memory import ConversationBufferMemory
 from typing import Dict, Optional
 from langchain_core.messages import HumanMessage, AIMessage
@@ -65,6 +66,14 @@ class RouteRequest(BaseModel):
 class MultiRouteRequest(BaseModel):
     places: list[str]
     profile: Optional[str] = "walking"
+
+
+class ShareLocationRequest(BaseModel):
+    lat: float
+    lon: float
+    accuracy: Optional[int] = None
+    ts: Optional[int] = None
+    session_id: Optional[str] = None
 
 chat_sessions: Dict[str, ConversationBufferMemory] = {}
 
@@ -179,6 +188,28 @@ def tool_route_multi(req: MultiRouteRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"multi-route tool error: {e}")
+
+
+@app.post("/tools/share_location")
+def tool_share_location(req: ShareLocationRequest):
+    try:
+        when = (
+            datetime.utcfromtimestamp(req.ts / 1000).isoformat()
+            if req.ts
+            else datetime.utcnow().isoformat()
+        )
+        print(
+            "[LOCATION]",
+            req.session_id,
+            req.lat,
+            req.lon,
+            req.accuracy,
+            when,
+            flush=True,
+        )
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"share location error: {e}")
 
 
 @app.get("/chat/sessions")

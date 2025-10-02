@@ -64,10 +64,50 @@ def _build_default_plan(ni: dict[str, Any]) -> dict[str, Any]:
     h, m = _parse_start_hour(ni.get("hour"))
 
     timeline = [
-        {"t": _add_minutes(h, m, 0), "title": "Latone → Fontaine d'Apollon", "note": "Photos tôt et moins d'affluence"},
-        {"t": _add_minutes(h, m, 45), "title": "Promenade Grand Canal", "note": "Pause café au bord de l'eau"},
-        {"t": _add_minutes(h, m, 90), "title": "Aller à l'entrée du Château", "note": "Contrôle billets et sécurité"},
-        {"t": _add_minutes(h, m, 120), "title": "Galerie des Glaces", "note": "Fenêtre plus calme vers 14:30–15:30"},
+        {
+            "t": _add_minutes(h, m, 0),
+            "title": {
+                "fr": "Latone → Fontaine d'Apollon",
+                "en": "Latona → Apollo Fountain",
+            },
+            "note": {
+                "fr": "Photos tôt et moins d'affluence",
+                "en": "Photos early, lighter crowds",
+            },
+        },
+        {
+            "t": _add_minutes(h, m, 45),
+            "title": {
+                "fr": "Promenade Grand Canal",
+                "en": "Grand Canal stroll",
+            },
+            "note": {
+                "fr": "Pause café au bord de l'eau",
+                "en": "Coffee break by the water",
+            },
+        },
+        {
+            "t": _add_minutes(h, m, 90),
+            "title": {
+                "fr": "Aller à l'entrée du Château",
+                "en": "Walk to the Château entrance",
+            },
+            "note": {
+                "fr": "Contrôle billets et sécurité",
+                "en": "Ticket checks and security",
+            },
+        },
+        {
+            "t": _add_minutes(h, m, 120),
+            "title": {
+                "fr": "Galerie des Glaces",
+                "en": "Hall of Mirrors",
+            },
+            "note": {
+                "fr": "Fenêtre plus calme vers 14:30–15:30",
+                "en": "Calmer window around 2:30–3:30 pm",
+            },
+        },
     ]
 
     places = [
@@ -93,7 +133,12 @@ def _build_default_plan(ni: dict[str, Any]) -> dict[str, Any]:
     except Exception:
         pass
 
-    return {"title": "Suggested plan", "timeline": timeline, "waypoints": waypoints, "geometry": geometry}
+    return {
+        "title": {"en": "Suggested plan", "fr": "Plan suggéré"},
+        "timeline": timeline,
+        "waypoints": waypoints,
+        "geometry": geometry,
+    }
 
 
 def _to_plain_text(s: str) -> str:
