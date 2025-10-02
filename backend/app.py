@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from setup_graph import GraphManager, GraphManagerEval, State, INIT_MESSAGE
 # from langgraph.graph.message import add_messages
 from langchain.chat_models import init_chat_model
-from setup_graph import talk_to_agent
+from setup_graph import talk_to_agent, _build_default_plan
 from mcp_bridge import weather_summary_sync, versailles_itinerary_sync, route_between_sync, multi_route_sync
 
 app = FastAPI(title="4 mousquet'AIres", description="Backend with Langchain & Langgraph AI Agent")
@@ -76,6 +76,7 @@ class ShareLocationRequest(BaseModel):
     session_id: Optional[str] = None
 
 chat_sessions: Dict[str, ConversationBufferMemory] = {}
+live_locations: Dict[str, dict] = {}
 
 @app.post("/chat", response_model=EvaluationResponse)
 def chat_evaluation(request: EvaluationRequest):
@@ -193,6 +194,13 @@ def tool_route_multi(req: MultiRouteRequest):
 @app.post("/tools/share_location")
 def tool_share_location(req: ShareLocationRequest):
     try:
+        if req.session_id:
+            live_locations[req.session_id] = {
+                "lat": req.lat,
+                "lon": req.lon,
+                "accuracy": req.accuracy,
+                "ts": req.ts,
+            }
         when = (
             datetime.utcfromtimestamp(req.ts / 1000).isoformat()
             if req.ts
@@ -210,6 +218,87 @@ def tool_share_location(req: ShareLocationRequest):
         return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"share location error: {e}")
+
+
+class RecalcPlanRequest(BaseModel):
+    plan: Optional[dict] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    accuracy: Optional[int] = None
+    session_id: Optional[str] = None
+    profile: Optional[str] = "walking"
+
+
+@app.post("/tools/recalc_plan")
+def tool_recalc_plan(req: RecalcPlanRequest):
+    try:
+        loc_lat = req.lat
+        loc_lon = req.lon
+        if (loc_lat is None or loc_lon is None) and req.session_id:
+            stored = live_locations.get(req.session_id)
+            if stored:
+                loc_lat = stored.get("lat")
+                loc_lon = stored.get("lon")
+        if loc_lat is None or loc_lon is None:
+            raise HTTPException(status_code=400, detail="lat/lon or session_id with stored location required")
+
+        base_plan = req.plan or _build_default_plan({})
+        waypoints = list(base_plan.get("waypoints") or [])
+        geometry = base_plan.get("geometry") or {}
+
+        # Determine the first target waypoint to connect to
+        target = None
+        if waypoints:
+            target = waypoints[0]
+        else:
+            # Build a default plan to get a reasonable first waypoint
+            tmp = _build_default_plan({})
+            wps = tmp.get("waypoints") or []
+            if wps:
+                target = wps[0]
+                waypoints = wps
+                geometry = tmp.get("geometry") or {}
+
+        if not target or target.get("lat") is None or target.get("lon") is None:
+            raise HTTPException(status_code=400, detail="unable to determine first waypoint for plan")
+
+        # Build the first segment from current location to the first waypoint
+        first_seg = route_between_sync(
+            origin=f"{loc_lat}, {loc_lon}",
+            destination=f"{target['lat']}, {target['lon']}",
+            profile=req.profile or "walking",
+        )
+
+        # Normalize geometries into MultiLineString
+        segs: list[list[list[float]]] = []
+        geom = geometry or {}
+        if isinstance(geom, dict):
+            if geom.get("type") == "MultiLineString" and isinstance(geom.get("coordinates"), list):
+                segs = list(geom["coordinates"])  # type: ignore
+            elif geom.get("type") == "LineString" and isinstance(geom.get("coordinates"), list):
+                segs = [list(geom["coordinates"]) ]  # type: ignore
+        first_coords = []
+        fc = first_seg.get("geometry") or {}
+        if isinstance(fc, dict) and fc.get("type") == "LineString":
+            first_coords = list(fc.get("coordinates") or [])
+
+        combined = {
+            "type": "MultiLineString",
+            "coordinates": ([first_coords] if first_coords else []) + (segs or []),
+        }
+
+        updated_wps = [{"name": "Current location", "lat": loc_lat, "lon": loc_lon}] + waypoints
+
+        return {
+            "title": base_plan.get("title"),
+            "timeline": base_plan.get("timeline"),
+            "waypoints": updated_wps,
+            "geometry": combined,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"recalc plan error: {e}")
 
 
 @app.get("/chat/sessions")

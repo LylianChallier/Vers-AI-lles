@@ -10,10 +10,19 @@ export function ChatPanel({
   onInputChange,
   onSubmit,
   onClear,
+  onSend = () => {},
   suggestions,
   onSuggestion,
   feedRef,
 }) {
+  const handleKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent?.isComposing) return
+    const trimmed = input.trim()
+    if (!trimmed || isLoading) return
+    event.preventDefault()
+    onSend(trimmed)
+  }
+
   return (
     <Card className="chat-card">
       <div className="chat-card__header">
@@ -56,6 +65,7 @@ export function ChatPanel({
             onChange={(event) => onInputChange(event.target.value)}
             placeholder={copy.placeholder}
             disabled={isLoading}
+            onKeyDown={handleKeyDown}
           />
           <div className="chat-input__chips">
             {suggestions.slice(0, 3).map((item) => (

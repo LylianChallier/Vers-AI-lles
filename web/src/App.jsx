@@ -149,6 +149,34 @@ function VersaillesConcierge() {
     [sessionId]
   )
 
+  const recalcPlanFromLocation = useCallback(
+    async (loc) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/tools/recalc_plan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan,
+            lat: loc?.lat,
+            lon: loc?.lon,
+            accuracy: loc?.accuracy,
+            session_id: sessionId,
+            profile,
+          }),
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const updated = await response.json()
+        if (updated && updated.geometry) {
+          setPlan(updated)
+          setShowMap(true)
+        }
+      } catch (error) {
+        console.error('recalc_plan failed:', error)
+      }
+    },
+    [plan, sessionId, profile]
+  )
+
   const nowMins = new Date().getHours() * 60 + new Date().getMinutes()
   const minsLeft = Math.max(0, inMinutes(HOURS.chateau.last) - nowMins)
 
@@ -422,6 +450,9 @@ function VersaillesConcierge() {
         }
         setUserLocation(normalized)
         sendLocationToServer(normalized)
+        if (plan) {
+          recalcPlanFromLocation(normalized)
+        }
         setLocationLoading(false)
         setShowMap(true)
       },
@@ -585,19 +616,8 @@ function VersaillesConcierge() {
 
       <Header copy={copy.app} lang={lang} onLangChange={setLang} />
 
-      <MetaSummary
-        copy={copy}
-        crowd={crowd}
-        crowdLabel={crowdLabel}
-        weather={weather}
-        weatherLoading={weatherLoading}
-      weatherError={weatherError}
-      weatherFallbackAdvice={weatherFallbackAdvice}
-      hoursInfoText={hoursInfoText}
-    />
-
       <main className="app-main container">
-        <div className="plan-column">
+        <div className="plan-area">
           <MapPanel
             copy={copy.mapCard}
             open={mapOpen}
@@ -638,7 +658,38 @@ function VersaillesConcierge() {
             planSegments={planSegments}
             userLocation={userLocation}
           />
+        </div>
 
+        <div className="chat-area">
+          <ChatPanel
+            copy={copy.chat}
+            messages={messages}
+            isLoading={isLoading}
+            input={input}
+            onInputChange={setInput}
+            onSubmit={handleSubmit}
+            onClear={clearConversation}
+            onSend={sendMessage}
+            suggestions={suggestions}
+            onSuggestion={handleQuickChip}
+            feedRef={chatFeedRef}
+          />
+        </div>
+
+        <div className="summary-area">
+          <MetaSummary
+            copy={copy}
+            crowd={crowd}
+            crowdLabel={crowdLabel}
+            weather={weather}
+            weatherLoading={weatherLoading}
+            weatherError={weatherError}
+            weatherFallbackAdvice={weatherFallbackAdvice}
+            hoursInfoText={hoursInfoText}
+          />
+        </div>
+
+        <div className="suggestions-area">
           <SuggestionsPanel
             title={copy.suggestionsTitle}
             suggestions={suggestions}
@@ -646,19 +697,6 @@ function VersaillesConcierge() {
             disabled={isLoading}
           />
         </div>
-
-        <ChatPanel
-          copy={copy.chat}
-          messages={messages}
-          isLoading={isLoading}
-          input={input}
-          onInputChange={setInput}
-          onSubmit={handleSubmit}
-          onClear={clearConversation}
-          suggestions={suggestions}
-          onSuggestion={handleQuickChip}
-          feedRef={chatFeedRef}
-        />
       </main>
 
       <motion.button

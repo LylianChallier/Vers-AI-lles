@@ -55,9 +55,9 @@
 .container {
   position: relative;
   z-index: 1;
-  width: min(1120px, 92vw);
+  width: calc(100vw - 2rem);
   margin: 0 auto;
-  padding-inline: 1.5rem;
+  padding-inline: clamp(0.5rem, 1vw, 1.25rem);
 }
 
 .app-header {
@@ -109,15 +109,9 @@
 }
 
 .meta-grid {
-  margin-top: 2rem;
-  display: grid;
-  gap: 1.25rem;
-}
-
-@media (min-width: 720px) {
-  .meta-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .card {
@@ -335,35 +329,78 @@
 .app-main {
   margin-top: 2.75rem;
   display: grid;
-  gap: 1.5rem;
+  gap: 1.4rem;
   align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'plan'
+    'chat'
+    'suggestions'
+    'summary';
 }
 
-@media (min-width: 1080px) {
-  .app-main {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-  }
-}
-
-.plan-column {
+.plan-area,
+.chat-area,
+.summary-area,
+.suggestions-area {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   align-items: stretch;
 }
 
+.plan-area {
+  grid-area: plan;
+}
+
+.chat-area {
+  grid-area: chat;
+  min-height: 0;
+}
+
+.chat-area .chat-card {
+  flex: 1;
+  width: 100%;
+}
+
+.summary-area {
+  grid-area: summary;
+}
+
+.suggestions-area {
+  grid-area: suggestions;
+}
+
 @media (min-width: 1080px) {
-  .plan-column {
+  .app-main {
+    grid-template-columns: minmax(320px, 1.05fr) minmax(0, 2.6fr) minmax(280px, 1.15fr);
+    grid-template-areas:
+      'plan chat summary'
+      'suggestions chat summary';
+    gap: 1.5rem;
+  }
+
+  .plan-area,
+  .summary-area {
     max-height: calc(100vh - 4rem);
     overflow-y: auto;
+  }
+
+  .plan-area {
     padding-right: 0.35rem;
   }
 
-  .plan-column::-webkit-scrollbar {
+  .summary-area {
+    padding-left: 0.35rem;
+  }
+
+  .plan-area::-webkit-scrollbar,
+  .summary-area::-webkit-scrollbar {
     width: 6px;
   }
 
-  .plan-column::-webkit-scrollbar-thumb {
+  .plan-area::-webkit-scrollbar-thumb,
+  .summary-area::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.18);
     border-radius: 999px;
   }
@@ -625,10 +662,11 @@
 }
 
 @media (max-width: 1079px) {
-  .plan-column {
+  .plan-area,
+  .summary-area {
     max-height: none;
     overflow: visible;
-    padding-right: 0;
+    padding: 0;
   }
 
   .chat-card {
