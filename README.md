@@ -1,5 +1,7 @@
 # Hackathon Datacraft - Château de Versailles
 
+C'est le repo du projet dans sa version Hackaton, une version mise à jour est disponible à : https://github.com/EpsilonFO/Vers-AI-lles/
+
 Pour lancer le projet, se mettre à la racine et exécuter :
 ```bash
 docker compose up --build
@@ -20,4 +22,3 @@ Pour tester le chatbot, cliquez sur le premier élément (POST /chat Chat With A
 La réponse s'affiche plus bas, dans `Response body`.
 
 Le front est à http://127.0.0.1:8501/
-après un docker compose up
