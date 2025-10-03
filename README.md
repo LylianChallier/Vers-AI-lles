@@ -18,3 +18,6 @@ Rendez-vous sur la page [localhost:1234](localhost:1234) pour accéder à Swagge
 Pour tester le chatbot, cliquez sur le premier élément (POST /chat Chat With Agent), puis cliquez sur `Try it out`. Le prompt se situe dans la clé message (initialement il y a écrit `string`). Ecrivez votre prompt puis cliquez sur `Exécuter`.
 
 La réponse s'affiche plus bas, dans `Response body`.
+
+Le front est à http://127.0.0.1:8501/
+après un docker compose up
