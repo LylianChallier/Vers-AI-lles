@@ -13,50 +13,50 @@ h, w, _ = img.shape
 # 2. Associer POI -> pixels
 # ============================
 poi_positions = {
-    # Château et abords immédiats (extension verticale : h/7)
-    "Château": (w // 2, h - h // 14),  # Milieu vertical du château
-    "Cour Royale": (w // 2, h - h // 7 + 10),
-    "Galerie des Glaces": (w // 2, h - h // 7 + 20),
-    "Chapelle Royale": (w // 2 + 20, h - h // 7 + 15),
-    "Opéra Royal": (w // 2 + 40, h - h // 7 + 30),
+    # Château et abords immédiats
+    "Château": (w // 2, h - (h // 3.5)),
+    "Cour Royale": (w // 2, h - (h // 3.5) + 10),
+    "Galerie des Glaces": (w // 2, h - (h // 3.5) + 20),
+    "Chapelle Royale": (w // 2 + 40, h - (h // 3.5) + 10),
+    "Opéra Royal": (w // 2 + 60, h - (h // 3.5) + 30),
 
-    # Sud des jardins (proche du château)
-    "Orangerie": (w // 2 - w // 4, h - h // 7 + 40),
-    "Bassin du Miroir": (w // 2, h - h // 7 + 80),
+    # Orangerie et bassins proches
+    "Orangerie": (w // 2 - (w // 4), h - (h // 3.5) + 50),
+    "Bassin du Miroir": (w // 2, h - (h // 3.5) + 100),
 
-    # Axes centraux (Fontaine de Latone et Bassin d’Apollon)
-    "Fontaine de Latone": (w // 2, h - h // 7 - h // 10),
+    # Fontaines et bassins principaux
+    "Fontaine de Latone": (w // 2, h - (h // 3.5) - (h // 7)),
     "Bassin d’Apollon": (w // 2, h // 2),
 
-    # Bosquets est (à droite de l'axe central)
-    "Bosquet de la Colonnade": (w // 2 + w // 8, h // 2 + h // 20),
-    "Bosquet des Bains d’Apollon": (w // 2 + w // 7, h // 2 + h // 15),
-    "Bosquet du Théâtre d’Eau": (w // 2 + w // 6, h // 2 + h // 10),
-    "Bassin de Neptune": (w // 2 + w // 5, h // 2 + h // 8),
+    # Bosquets
+    "Bosquet de la Colonnade": (w // 2 + (w // 8), h // 2 + 20),
+    "Bosquet des Bains d’Apollon": (w // 2 - (w // 8), h // 2 + 20),
+    "Bosquet du Théâtre d’Eau": (w // 2 + (w // 6), h // 2 + 60),
+    "Bassin de Neptune": (w // 2 + (w // 6), h // 2 + 100),
+    "Bassin de Flore": (w // 2 - (w // 6), h // 2 + 100),
+    "Fontaine du Dragon": (w // 2 + (w // 7), h // 2 + 150),
+    "Fontaine de l’Encelade": (w // 2 - (w // 7), h // 2 + 150),
+    "Bosquet de l’Encélade": (w // 2 - (w // 6), h // 2 + 80),
+    "Bosquet des Trois Fontaines": (w // 2, h // 2 + 120),
+    "Bosquet de la Reine": (w // 2 + (w // 5), h // 2 - 50),
+    "Bosquet de l’Étoile": (w // 2 - (w // 5), h // 2 - 50),
+    "Bosquet du Dauphin": (w // 2 - (w // 4), h // 2 - 30),
+    "Bosquet de l’Obélisque": (w // 2 - (w // 7), h // 2 + 120),
+    "Salle de Bal": (w // 2 - (w // 6), h // 2 - 80),
+    "Bosquet des Dômes": (w // 2 + (w // 10), h // 2 - 100),
 
-    # Nord-est (près du Grand Canal)
-    "Fontaine du Dragon": (w // 2 + w // 5, h // 2 + h // 6),
-    "Grand Canal": (w // 2, h // 4),
+    # Grands éléments des jardins
+    "Grand Canal": (w // 2, h // 5),
 
-    # Trianons (nord-est)
-    "Bosquet de la Reine": (w // 2 + w // 4, h // 3 + h // 15),
-    "Petit Trianon": (w - w // 3, h // 3),
-    "Hameau de la Reine": (w - w // 3 + 30, h // 3 + 20),
-    "Grand Trianon": (w - w // 3 - 40, h // 3 + 30),
+    # Trianons
+    "Petit Trianon": (w - (w // 3), h // 3),
+    "Hameau de la Reine": (w - (w // 3) + 40, h // 3 + 30),
+    "Grand Trianon": (w - (w // 3) - 50, h // 3 + 50),
+    "Domaine de Marie-Antoinette": (w - (w // 3) + 60, h // 3 + 40),
 
-    # Bosquets ouest (à gauche de l'axe central)
-    "Bosquet de l’Étoile": (w // 2 - w // 5, h // 2 - h // 15),
-    "Bosquet du Dauphin": (w // 2 - w // 4, h // 2 - h // 20),
-    "Bosquet de l’Obélisque": (w // 2 - w // 6, h // 2 + h // 12),
-    "Bosquet des Trois Fontaines": (w // 2 - w // 8, h // 2 + h // 9),
-    "Fontaine de l’Encelade": (w // 2 - w // 6, h // 2 + h // 7),
-    "Bassin de Flore": (w // 2 - w // 5, h // 2 + h // 10),
-    "Salle de Bal": (w // 2 - w // 6, h // 2 - h // 10),
-    "Bosquet des Dômes": (w // 2 - w // 8, h // 2 - h // 8),
-
-    # Sud-ouest (proche de l'Orangerie)
-    "Pièce d’eau des Suisses": (w // 2 - w // 5, h - h // 7 + 50),
-    "Potager du Roi": (w // 5, h - h // 7 + 30),
+    # Autres
+    "Pièce d’eau des Suisses": (w // 2 + (w // 5), h - (h // 3.5) + 60),
+    "Potager du Roi": (w // 5, h - (h // 3.5) + 40),
 }
 
 
