@@ -134,4 +134,3 @@ Swagger UI (`/docs`) and ReDoc (`/redoc`) give payload schemas and sample bodies
 ---
 
 Built with ❤️ by the 4 MousquetAIres for the Château de Versailles hackathon — contributions and suggestions welcome!
-
