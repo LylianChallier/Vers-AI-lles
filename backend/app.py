@@ -6,7 +6,6 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from datetime import datetime
-from langchain.memory import ConversationBufferMemory
 from typing import Dict, Optional
 from langchain_core.messages import HumanMessage, AIMessage
 from fastapi.middleware.cors import CORSMiddleware
@@ -75,7 +74,6 @@ class ShareLocationRequest(BaseModel):
     ts: Optional[int] = None
     session_id: Optional[str] = None
 
-chat_sessions: Dict[str, ConversationBufferMemory] = {}
 live_locations: Dict[str, dict] = {}
 
 @app.post("/chat", response_model=EvaluationResponse)
@@ -105,13 +103,6 @@ def chat_evaluation(request: EvaluationRequest):
 def chat_with_agent(chat_message: ChatMessage):
     try:
         # Créer ou récupérer la mémoire pour cette session
-        if chat_message.session_id not in chat_sessions:
-            chat_sessions[chat_message.session_id] = ConversationBufferMemory(
-                memory_key="chat_history",
-                return_messages=True
-            )
-        
-        memory = chat_sessions[chat_message.session_id]
                 
         # Récupérer l'historique de conversation
         # chat_history = memory.chat_memory.messages
@@ -130,10 +121,6 @@ def chat_with_agent(chat_message: ChatMessage):
             ai_message = str(ai_response)
         route_payload = getattr(ai_response, 'route', None)
         plan_payload = getattr(ai_response, 'plan', None)
-        
-        # IMPORTANT: Sauvegarder dans la mémoire
-        memory.chat_memory.add_user_message(chat_message.message)
-        memory.chat_memory.add_ai_message(ai_message)
         
         return ChatResponse(
             response=ai_message,
@@ -300,15 +287,3 @@ def tool_recalc_plan(req: RecalcPlanRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"recalc plan error: {e}")
 
-
-@app.get("/chat/sessions")
-def get_chat_sessions():
-    return {"sessions": chat_sessions}
-
-@app.delete("/chat/sessions/{session_id}")
-def clear_chat_session(session_id: str):
-    if session_id in chat_sessions:
-        del chat_sessions[session_id]
-        return {"message": f"Session {session_id} supprimée"}
-    else:
-        raise HTTPException(status_code=404, detail="Session non trouvée")
