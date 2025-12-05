@@ -1,137 +1,181 @@
-# Versailles Concierge — Les 4 MousquetAIres
+# Hackathon Datacraft - Château de Versailles
 
-AI concierge built at the Datacraft × Château de Versailles hackathon. It blends a FastAPI + LangChain backend with a React (Vite) web application, MCP tool servers for weather and routing, and optional Streamlit prototypes.
+AI Assistant to organize visits to the Château de Versailles.
 
-> 🇫🇷 Le projet rassemble un agent conversationnel multilingue capable de répondre aux visiteurs, planifier des itinéraires dans Versailles et recommander des activités en s'appuyant sur des graphes de connaissances et des sources météo.
+## 🚀 Quick Start
 
----
+### Prerequisites
+- Docker and Docker Compose installed
+- Mistral AI API Key (create a `.env` file at the root with your key)
 
-## Project layout
+### Configuration
+Create a `.env` file at the root of the project:
+```bash
+MISTRAL_API_KEY=your_mistral_api_key
+MISTRAL_MODEL=mistral-medium-latest
+EMBEDDING_MODEL=mistral-embed
+```
 
-| Path | Description |
-| --- | --- |
-| `backend/` | FastAPI service orchestrating the LangChain/LangGraph agent and exposing `/chat` + tool endpoints |
-| `web/` | React + Vite front-end (main UI: "Versailles Concierge") with the new crown/chat-bubble branding |
-| `mcp_servers/` | Model Context Protocol servers (weather + OSM routing bridges) used by the agent |
-| `frontend/` | Legacy Streamlit prototype kept for reference |
-| `docker-compose.yaml` | Spins up the backend, MCP services, and optional Streamlit UI |
-
----
-
-## Prerequisites
-
-- Docker & Docker Compose **or** Python 3.11 + Node.js ≥ 18
-- A `.env` file at repository root with the required API keys
-- (Optional) Vercel CLI for production deployment of the Vite front-end
-
-### Environment variables
-
-Copy `.env` from the sample provided and populate the keys that matter to your deployment:
-
-- `MISTRAL_API_KEY`, `MISTRAL_MODEL`, `EMBEDDING_MODEL` for the LLM
-- Weather + routing providers: `OPENWEATHER_API_KEY`, `OPEN_METEO_BASE`, `OSM_NOMINATIM_URL`, `OSRM_BASE_URL`
-- Optional paid providers: `MAPBOX_TOKEN`, `ORS_API_KEY`, `LOCATIONIQ_KEY`, `GEOAPIFY_KEY`
-- Front-end build variable: `VITE_API_BASE_URL` (defaults to `http://localhost:8002`)
-- `OSM_CONTACT_EMAIL` is recommended by OpenStreetMap for bulk usage
-
-Keep the file out of version control; each service (Docker, Vite build, FastAPI) reads from the root `.env`.
-
----
-
-## Quick start (Docker Compose)
-
+### Launch
+From the project root, execute:
 ```bash
 docker compose up --build
 ```
 
-Services become available when the logs show `Uvicorn running on http://0.0.0.0:8002`. The FastAPI docs live at [http://localhost:8002/docs](http://localhost:8002/docs). The Streamlit prototype (if you keep the `frontend` service) publishes on [http://localhost:8501](http://localhost:8501).
-
-To rebuild after changing dependencies:
-
-```bash
-docker compose up --build --force-recreate
+Wait until the logs display:
+```
+backend-1  | INFO:     Started server process [1]
+backend-1  | INFO:     Application startup complete.
+backend-1  | INFO:     Uvicorn running on http://0.0.0.0:8001
 ```
 
-Stop everything with `docker compose down`.
+### Service Access
+- **Frontend (user interface)**: [http://localhost:8501](http://localhost:8501)
+- **Backend API (Swagger UI)**: [http://localhost:8001/docs](http://localhost:8001/docs)
 
 ---
 
-## Local development (without Docker)
+## 📚 Project Architecture
 
-### Backend (FastAPI + LangChain)
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-pip install -r backend/requirements.txt
-uvicorn backend.app:app --host 0.0.0.0 --port 8002 --reload
+### General Structure
+```
+Vers-AI-lles/
+├── backend/          # FastAPI API + LangGraph agents
+├── frontend/         # Streamlit Interface
+└── docker-compose.yaml
 ```
 
-The interactive docs and OpenAPI explorer remain at `http://localhost:8002/docs`.
+### Backend (`/backend`)
 
-### MCP bridges
+The backend is built with **FastAPI** and **LangGraph** to orchestrate conversational AI agents.
 
-Weather and OSM tooling run inside the API process, but you can test them directly via the scripts in `mcp_servers/`. Example:
+#### Main Files
 
+**`app.py`** - FastAPI entry point
+- Exposes 2 endpoints:
+  - `POST /chat`: Evaluation endpoint (stateless)
+  - `POST /`: Main endpoint with session management
+- Configures CORS to allow frontend requests
+- Initializes graph managers (`GraphManager` and `GraphManagerEval`)
+
+**`setup_graph.py`** - Core of the LangGraph agent system
+- **State**: Pydantic model that maintains conversation state
+  - `messages`: Message history
+  - `user_wants_road_in_versailles`: User wants an itinerary
+  - `user_wants_specific_info`: User wants specific information
+  - `user_asks_off_topic`: Off-topic question
+  - `necessary_info_for_road`: Information collected to create the itinerary (date, time, group type, duration, budget)
+
+- **Agents**:
+  - `IntentAgent`: Analyzes user intent (visit, specific info, off-topic)
+  - `ItineraryInfoAgent`: Collects necessary information to create an itinerary (conversational mode)
+  - `ItineraryInfoAgentEval`: Evaluation version that extracts all info in a single pass
+  - `RoadInVersaillesAgent`: Generates personalized itinerary using RAG
+  - `SpecificInfoAgent`: Answers specific questions about the château
+  - `OffTopicAgent`: Handles off-topic or courtesy questions
+
+- **Graphs**:
+  - `GraphManager`: Standard conversational mode (progressive info collection)
+  - `GraphManagerEval`: Evaluation mode (direct extraction without intermediate questions)
+
+**`embedding.py`** - Embedding system
+- Uses Mistral AI API to generate embeddings
+- `embed_query()` function: Handles long texts by splitting them into chunks with overlap
+- Similarity functions: cosine, Manhattan, Euclidean
+- `select_top_n_similar_documents()`: Selects the most relevant documents for RAG
+
+**`create_db.py`** - Data preparation
+- Loads data from `data/tips.json` (tips about Versailles)
+- Generates embeddings for each tip
+- Saves enriched documents in `data/tips_embedded.json`
+
+**`list.py`** - In-memory database
+- Contains `longlist`: list of embedding documents loaded at startup
+- Used by `RoadInVersaillesAgent` for RAG
+
+**`rag_config.py`** - RAG Configuration (legacy)
+- Configuration file for the RAG system
+
+### Frontend (`/frontend`)
+
+User interface built with **Streamlit**.
+
+**`front.py`** - Main application
+- Chat interface with the backend
+- Message history management in `st.session_state`
+- API calls to `http://backend:8001/`
+- Styled display of user and assistant messages
+
+**`components.py`** - UI Components
+- HTML rendering functions for messages
+- Header, loading spinner, etc.
+
+**`styles.css`** - Custom styles
+- Modern design for the chat interface
+
+### Docker
+
+**`docker-compose.yaml`**
+- `backend` service: Exposes port 8001
+- `frontend` service: Exposes port 8501
+- Environment variables shared from `.env`
+- Mounted volumes for hot development
+
+---
+
+## 🤖 System Operation
+
+### Conversational Flow
+
+1. **Intent Analysis**: The `IntentAgent` determines what the user wants
+2. **Conditional Routing**:
+   - If visit → `ItineraryInfoAgent` collects necessary info
+   - If specific info → `SpecificInfoAgent` responds directly
+   - If off-topic → `OffTopicAgent` redirects politely
+3. **Itinerary Generation**: Once all info is collected, `RoadInVersaillesAgent` creates a personalized plan using RAG (Retrieval-Augmented Generation) with 50 relevant documents
+
+### RAG (Retrieval-Augmented Generation)
+
+The system uses a database of tips about Versailles:
+- Embedding documents with Mistral AI
+- Similarity calculated by Euclidean distance
+- Top 50 documents injected into the prompt to contextualize the response
+
+---
+
+## 🔧 Development
+
+### Backend only
 ```bash
-python mcp_servers/osm_server.py --help
+cd backend
+pip install -r requirements.txt
+uvicorn app:app --reload --port 8001
 ```
 
-### Web front-end (Vite React)
-
-```bash
-cd web
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173` and ensure `VITE_API_BASE_URL` points to your backend. The production build command is `npm run build` (output in `web/dist`). The `web/public/icons` directory now holds the crown + chat bubble assets wired into `index.html` and the header component.
-
-### Legacy Streamlit app (optional)
-
+### Frontend only
 ```bash
 cd frontend
 pip install -r requirements.txt
 streamlit run front.py
 ```
 
-It connects to the same API endpoints exposed by the FastAPI service.
+### Regenerate embedding database
+```bash
+cd backend
+python create_db.py
+```
 
 ---
 
-## API overview
+## 📝 Technical Notes
 
-Key routes exposed by `backend/app.py`:
-
-- `POST /chat` — evaluation endpoint returning a short-form answer (stateless)
-- `POST /` — conversational agent with session support, itinerary and plan payloads
-- `POST /tools/weather` — summarize weather window for a date/time span
-- `POST /tools/versailles_route` — detailed itinerary recommendations
-- `POST /tools/route` / `POST /tools/route_multi` — routing helpers (single or multi-stop)
-- `POST /tools/share_location` — stores the visitor location for context-aware replies
-- `POST /tools/recalc_plan` — refreshes a visit plan when conditions change
-- `GET /chat/sessions` & `DELETE /chat/sessions/{session_id}` — manage cached conversation state
-
-Swagger UI (`/docs`) and ReDoc (`/redoc`) give payload schemas and sample bodies.
+- **LangGraph** allows creating agent workflows with routing conditions
+- **Structured Output**: All agents use `with_structured_output()` to guarantee valid JSON responses
+- **Evaluation mode**: Disabled for now, designed to extract information in a single request
+- **Session management**: Messages are kept in the `State` to maintain context
 
 ---
 
-## Deployment notes
+## 🏗️ Team - Les 4 mousquet'AIres
 
-- **Web app (Vite):** push the repository to GitHub and import the `web/` folder into Vercel. Use `npm run build` as build command and `dist` as the output directory. Populate the same `VITE_*` variables under Project → Settings → Environment Variables.
-- **Backend:** deploy on a FastAPI-friendly host (Railway, Render, Fly.io, Azure Container Apps, etc.) or ship the Docker image built from `backend/Dockerfile`. Remember to provide the same `.env` variables and open port `8002`.
-- **Static icons:** the favicon bundle already lives in `web/public/icons` and is referenced by `<link rel="icon">`, the header brand image, and Apple touch metadata.
-
----
-
-## Troubleshooting
-
-- Missing API keys → most endpoints rely on third-party providers; check your `.env` values and restart.
-- CORS errors in the browser → confirm the backend host is listed in `VITE_API_BASE_URL` and that FastAPI is reachable.
-- Unexpected agent answers → wipe cached sessions via `DELETE /chat/sessions/{session_id}` or clear `localStorage` (`versailles-concierge-*` keys).
-- Docker build failures → ensure you have internet access for Python package installation and re-run with `--build`.
-
----
-
-Built with ❤️ by the 4 MousquetAIres for the Château de Versailles hackathon — contributions and suggestions welcome!
-
+Project developed during Hackathon Datacraft 2024

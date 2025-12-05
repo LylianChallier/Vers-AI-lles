@@ -1,65 +1,26 @@
+#version: "4"
+
 services:
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    build: ./backend  # Chemin vers le dossier contenant le Dockerfile
     ports:
-      - "8002:8002"
+      - "8001:8001"   # Mappe le port 5000 du conteneur vers le port 5000 de ta machine
     volumes:
-      - ./backend:/app/backend
-      - ./mcp_servers:/app/mcp_servers
+      - ./backend:/code  # Monte le dossier backend dans /code du conteneur (pour le développement)
     environment:
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - MISTRAL_MODEL=${MISTRAL_MODEL}
-      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
-      - OPEN_METEO_BASE=${OPEN_METEO_BASE}
-      - OSM_NOMINATIM_URL=${OSM_NOMINATIM_URL}
-      - OSRM_BASE_URL=${OSRM_BASE_URL}
-      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
-      - ORS_API_KEY=${ORS_API_KEY}
-      - LOCATIONIQ_KEY=${LOCATIONIQ_KEY}
-      - GEOAPIFY_KEY=${GEOAPIFY_KEY}
-      - OSM_CONTACT_EMAIL=${OSM_CONTACT_EMAIL}
-    depends_on:
-      - mcp-osm
-      - mcp-weather
-    restart: unless-stopped
-
-  mcp-weather:
-    build:
-      context: .
-      dockerfile: mcp_servers/Dockerfile
-    volumes:
-      - ./mcp_servers:/app/mcp_servers
-    environment:
-      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
-      - OPEN_METEO_BASE=${OPEN_METEO_BASE}
-      - OSM_NOMINATIM_URL=${OSM_NOMINATIM_URL}
-    restart: unless-stopped
-
+    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
+  
   frontend:
-    build: ./frontend
+    build: ./frontend  # Chemin vers le dossier contenant le Dockerfile
     ports:
-      - "8501:8501"
+      - "8501:8501"   # Mappe le port 8501 du conteneur vers le port 8501 de ta machine
     volumes:
-      - ./frontend:/code
-    restart: unless-stopped
+      - ./frontend:/app  # Monte le dossier frontend dans /app du conteneur
+    restart: unless-stopped  # Redémarre automatiquement le conteneur en cas d'erreur
     depends_on:
       - backend
-
-  mcp-osm:
-    build:
-      context: .
-      dockerfile: mcp_servers/Dockerfile
-    volumes:
-      - ./mcp_servers:/app/mcp_servers
-    environment:
-      - OSM_NOMINATIM_URL=${OSM_NOMINATIM_URL}
-      - OSRM_BASE_URL=${OSRM_BASE_URL}
-      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
-      - ORS_API_KEY=${ORS_API_KEY}
-      - LOCATIONIQ_KEY=${LOCATIONIQ_KEY}
-      - GEOAPIFY_KEY=${GEOAPIFY_KEY}
-      - OSM_CONTACT_EMAIL=${OSM_CONTACT_EMAIL}
-    restart: unless-stopped
+  
+  
