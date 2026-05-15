@@ -178,4 +178,4 @@ python create_db.py
 
 ## 🏗️ Team - Les 4 mousquet'AIres
 
-Project developed during Hackathon Datacraft 2024
+Project developed during Hackathon Datacraft 2025
